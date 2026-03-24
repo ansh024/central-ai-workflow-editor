@@ -3,7 +3,6 @@ import AppShell from './components/AppShell';
 import TemplateGallery from './components/TemplateGallery';
 import FlowEditor from './components/FlowEditor';
 import CallSimulator from './components/CallSimulator';
-import NewWorkflowChooser from './components/NewWorkflowChooser';
 import SetupCall from './components/SetupCall';
 import Onboarding from './components/Onboarding';
 
@@ -12,7 +11,7 @@ function App() {
   const [currentFlow, setCurrentFlow] = useState(null);
   const [flowName, setFlowName] = useState('');
   const [showSimulator, setShowSimulator] = useState(false);
-  const [showChooser, setShowChooser] = useState(false);
+  const [showNewWorkflowSidebar, setShowNewWorkflowSidebar] = useState(false);
   const editorFlowRef = useRef(null);
 
   const savedFlows = [
@@ -28,13 +27,17 @@ function App() {
     setActiveView('editor');
   };
 
-  // "Create New Workflow" opens the chooser
-  const handleNewWorkflow = () => {
-    setShowChooser(true);
+  // "Create New Workflow" opens the sidebar
+  const handleOpenSidebar = () => {
+    setShowNewWorkflowSidebar(true);
+  };
+
+  const handleCloseSidebar = () => {
+    setShowNewWorkflowSidebar(false);
   };
 
   const handleStartScratch = () => {
-    setShowChooser(false);
+    setShowNewWorkflowSidebar(false);
     const emptyFlow = { trigger: { type: 'incoming_call', config: {} }, nodes: [] };
     setCurrentFlow(emptyFlow);
     editorFlowRef.current = emptyFlow;
@@ -43,7 +46,7 @@ function App() {
   };
 
   const handleChooseMax = () => {
-    setShowChooser(false);
+    setShowNewWorkflowSidebar(false);
     // Unlock audio playback by playing a silent buffer during this user gesture.
     // This allows SetupCall's useEffect to play TTS + transition sound without being blocked.
     try {
@@ -62,9 +65,9 @@ function App() {
     setActiveView('setupcall');
   };
 
-  const handleChooseTemplates = () => {
-    setShowChooser(false);
-    setActiveView('workflows');
+  const handleSelectTemplateFromSidebar = (template) => {
+    setShowNewWorkflowSidebar(false);
+    handleSelectTemplate(template);
   };
 
   const handleSetupComplete = (answers, action) => {
@@ -109,10 +112,14 @@ function App() {
     <AppShell activeView={activeView} onNavigate={handleNavigate} onStartOnboarding={handleStartOnboarding}>
       {activeView === 'workflows' && (
         <TemplateGallery
-          onSelectTemplate={handleSelectTemplate}
-          onStartScratch={handleNewWorkflow}
+          onSelectTemplate={handleSelectTemplateFromSidebar}
+          onStartScratch={handleStartScratch}
+          onChooseMax={handleChooseMax}
           savedFlows={savedFlows}
           embedded
+          showSidebar={showNewWorkflowSidebar}
+          onOpenSidebar={handleOpenSidebar}
+          onCloseSidebar={handleCloseSidebar}
         />
       )}
 
@@ -150,14 +157,6 @@ function App() {
         />
       )}
 
-      {showChooser && (
-        <NewWorkflowChooser
-          onChooseMax={handleChooseMax}
-          onChooseTemplates={handleChooseTemplates}
-          onChooseScratch={handleStartScratch}
-          onClose={() => setShowChooser(false)}
-        />
-      )}
     </AppShell>
   );
 }
