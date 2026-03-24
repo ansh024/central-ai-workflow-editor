@@ -43,6 +43,21 @@ function App() {
 
   const handleChooseMax = () => {
     setShowChooser(false);
+    // Unlock audio playback by playing a silent buffer during this user gesture.
+    // This allows SetupCall's useEffect to play TTS + transition sound without being blocked.
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const buf = ctx.createBuffer(1, 1, 22050);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(ctx.destination);
+      src.start(0);
+      window.__audioUnlocked = true;
+      // Also unlock HTML Audio element
+      const silence = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
+      silence.volume = 0;
+      silence.play().catch(() => {});
+    } catch (e) { /* ignore */ }
     setActiveView('setupcall');
   };
 

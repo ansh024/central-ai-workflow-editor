@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Claude_Preview__preview_start",
+      "Bash(xargs kill:*)",
+      "Bash(curl -s -X POST http://localhost:3001/api/voice/interpret -H \"Content-Type: application/json\" -d '{\"\"\"\"transcript\"\"\"\":\"\"\"\"dental clinic called Riverside Dental\"\"\"\",\"\"\"\"currentQuestion\"\"\"\":1,\"\"\"\"currentAnswers\"\"\"\":{\"\"\"\"industry\"\"\"\":null,\"\"\"\"businessName\"\"\"\":\"\"\"\"\"\"\"\"}}')",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" -X POST http://localhost:3001/api/voice/tts -H \"Content-Type: application/json\" -d '{\"\"text\"\":\"\"Hello, I am Max!\"\"}')",
+      "Bash(curl -s -X POST http://localhost:3001/api/voice/tts -H \"Content-Type: application/json\" -d '{\"\"text\"\":\"\"Hello, I am Max!\"\"}')",
+      "Bash(curl -s -o /tmp/test_tts.mp3 -w \"%{http_code}\" -X POST http://localhost:3001/api/voice/tts -H \"Content-Type: application/json\" -d '{\"\"text\"\":\"\"Hello I am Max\"\"}')",
+      "Bash(curl -s -X POST http://localhost:3001/api/voice/tts -H \"Content-Type: application/json\" -d '{\"\"\"\"text\"\"\"\":\"\"\"\"Hello I am Max\"\"\"\"}')"
+    ]
+  }
+}
