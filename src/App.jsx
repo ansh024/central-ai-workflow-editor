@@ -5,6 +5,7 @@ import FlowEditor from './components/FlowEditor';
 import CallSimulator from './components/CallSimulator';
 import NewWorkflowChooser from './components/NewWorkflowChooser';
 import SetupCall from './components/SetupCall';
+import Onboarding from './components/Onboarding';
 
 function App() {
   const [activeView, setActiveView] = useState('home'); // home | workflows | editor | setupcall
@@ -84,12 +85,28 @@ function App() {
     }
   };
 
+  const handleStartOnboarding = () => {
+    // Unlock audio playback for Max's voice guidance
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const buf = ctx.createBuffer(1, 1, 22050);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.connect(ctx.destination);
+      src.start(0);
+      const silence = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
+      silence.volume = 0;
+      silence.play().catch(() => {});
+    } catch (e) { /* ignore */ }
+    setActiveView('onboarding');
+  };
+
   const handleNavigate = (view) => {
     setActiveView(view);
   };
 
   return (
-    <AppShell activeView={activeView} onNavigate={handleNavigate}>
+    <AppShell activeView={activeView} onNavigate={handleNavigate} onStartOnboarding={handleStartOnboarding}>
       {activeView === 'workflows' && (
         <TemplateGallery
           onSelectTemplate={handleSelectTemplate}
@@ -113,6 +130,16 @@ function App() {
         <SetupCall
           onComplete={handleSetupComplete}
           onBack={() => setActiveView('workflows')}
+        />
+      )}
+
+      {activeView === 'onboarding' && (
+        <Onboarding
+          onBack={() => setActiveView('home')}
+          onComplete={(data) => {
+            console.log('Onboarding complete:', data);
+            setActiveView('home');
+          }}
         />
       )}
 

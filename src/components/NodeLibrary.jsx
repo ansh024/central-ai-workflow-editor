@@ -85,7 +85,7 @@ export default function NodeLibrary({ onAddNode, collapsed, onToggle }) {
             placeholder="Search nodes..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-8 pr-3 py-2 rounded-lg border border-border text-[12px] text-text-dark focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 placeholder:text-text-light"
+            className="w-full pl-8 pr-3 py-2 rounded-lg border border-border text-[12px] text-text-dark focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 placeholder:text-placeholder"
           />
         </div>
       </div>

@@ -41,7 +41,7 @@ export default function NodeConfigPanel({ node, onUpdate, onDelete, onClose }) {
               type="text"
               value={value || ''}
               onChange={(e) => handleFieldChange(field.key, e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg border border-border text-[13px] text-text-dark bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 placeholder:text-text-light"
+              className="w-full px-3 py-2.5 rounded-lg border border-border text-[13px] text-text-dark bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 placeholder:text-placeholder"
               placeholder={`Enter ${field.label.toLowerCase()}`}
             />
           </div>
@@ -54,7 +54,7 @@ export default function NodeConfigPanel({ node, onUpdate, onDelete, onClose }) {
               value={value || ''}
               onChange={(e) => handleFieldChange(field.key, e.target.value)}
               rows={3}
-              className="w-full px-3 py-2.5 rounded-lg border border-border text-[13px] text-text-dark bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 resize-none placeholder:text-text-light"
+              className="w-full px-3 py-2.5 rounded-lg border border-border text-[13px] text-text-dark bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 resize-none placeholder:text-placeholder"
               placeholder={`Enter ${field.label.toLowerCase()}`}
             />
             <div className="flex items-center justify-between mt-1">

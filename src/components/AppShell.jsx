@@ -3,7 +3,7 @@ import {
   Menu, ChevronDown, ChevronUp, Bell, HelpCircle, Sparkles,
   PenSquare, Clock, Link, Workflow, FileText, Database,
   PhoneIncoming, MessageCircle, ListChecks, LayoutGrid, Calendar,
-  Search, Paperclip, ArrowUp,
+  Search, Paperclip, ArrowUp, Rocket,
 } from 'lucide-react';
 
 const SIDEBAR_SECTIONS = [
@@ -48,12 +48,12 @@ const SIDEBAR_SECTIONS = [
   },
 ];
 
-export default function AppShell({ activeView, onNavigate, children }) {
+export default function AppShell({ activeView, onNavigate, onStartOnboarding, children }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [askCentralOpen, setAskCentralOpen] = useState(true);
 
   // Full-screen views: hide shell
-  if (activeView === 'editor' || activeView === 'setupcall') {
+  if (activeView === 'editor' || activeView === 'setupcall' || activeView === 'onboarding') {
     return children;
   }
 
@@ -187,8 +187,19 @@ export default function AppShell({ activeView, onNavigate, children }) {
               })}
             </nav>
 
-            {/* Bottom: Help + Account */}
+            {/* Bottom: Setup Guide + Help + Account */}
             <div className="border-t border-border p-2 space-y-1">
+              {/* Setup Guide CTA */}
+              <button
+                onClick={onStartOnboarding}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[10px] bg-gradient-to-r from-primary to-primary-dark text-white text-[13px] font-semibold hover:shadow-md hover:shadow-primary/20 transition-all duration-200 cursor-pointer focus:outline-none mb-1"
+              >
+                <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                  <Rocket className="w-4 h-4" />
+                </div>
+                <span className="flex-1 text-left">Setup Guide</span>
+                <span className="text-[11px] font-normal bg-white/20 rounded-full px-2 py-0.5">New</span>
+              </button>
               <button className="w-10 h-10 rounded-full bg-primary flex items-center justify-center cursor-pointer focus:outline-none shadow-sm ml-1 mb-2">
                 <HelpCircle className="w-5 h-5 text-white" />
               </button>
@@ -245,7 +256,7 @@ export default function AppShell({ activeView, onNavigate, children }) {
                   <input
                     type="text"
                     placeholder="Schedule meetings from email threads"
-                    className="w-full text-[15px] text-text-dark placeholder:text-text-light focus:outline-none mb-3"
+                    className="w-full text-[15px] text-text-dark placeholder:text-placeholder focus:outline-none mb-3"
                   />
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">

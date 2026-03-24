@@ -341,7 +341,7 @@ export default function SetupCall({ onComplete, onBack }) {
               onChange={(e) => setTextInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleTextSubmit()}
               placeholder="Type instead..."
-              className="flex-1 bg-transparent text-sm text-text-dark placeholder:text-text-light focus:outline-none"
+              className="flex-1 bg-transparent text-sm text-text-dark placeholder:text-placeholder focus:outline-none"
             />
             <button
               onClick={handleTextSubmit}
@@ -436,7 +436,7 @@ function Q1Industry({ answers, updateAnswer, onNext }) {
             value={answers.businessName}
             onChange={(e) => updateAnswer('businessName', e.target.value)}
             placeholder="e.g., Riverside Dental"
-            className="w-full bg-surface border border-border rounded-[10px] px-4 py-2.5 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all duration-200"
+            className="w-full bg-surface border border-border rounded-[10px] px-4 py-2.5 text-sm text-text-dark placeholder:text-placeholder focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all duration-200"
           />
         </div>
       )}
@@ -566,7 +566,7 @@ function Q3Intents({ answers, updateAnswer, onNext }) {
           onChange={(e) => setCustomIntent(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && addCustom()}
           placeholder="Add your own..."
-          className="flex-1 bg-surface border border-border rounded-[10px] px-4 py-2.5 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50 transition-all duration-200"
+          className="flex-1 bg-surface border border-border rounded-[10px] px-4 py-2.5 text-sm text-text-dark placeholder:text-placeholder focus:outline-none focus:border-primary/50 transition-all duration-200"
         />
         <button onClick={addCustom} className="p-2.5 rounded-[10px] bg-surface border border-border text-text-mid hover:text-primary hover:border-primary/30 transition-colors duration-200 cursor-pointer focus:outline-none">
           <Plus className="w-4 h-4" />
@@ -640,7 +640,7 @@ function Q4Calendar({ answers, updateAnswer, onNext }) {
                 value={apt.name}
                 onChange={(e) => updateApptType(i, 'name', e.target.value)}
                 placeholder="e.g., Cleaning"
-                className="flex-1 bg-surface border border-border rounded-[10px] px-3 py-2 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50 transition-all duration-200"
+                className="flex-1 bg-surface border border-border rounded-[10px] px-3 py-2 text-sm text-text-dark placeholder:text-placeholder focus:outline-none focus:border-primary/50 transition-all duration-200"
               />
               <select
                 value={apt.duration}
@@ -771,7 +771,7 @@ function Q6Transfers({ answers, updateAnswer, onNext }) {
                   value={rule.condition}
                   onChange={(e) => updateRule(i, 'condition', e.target.value)}
                   placeholder="e.g., emergency"
-                  className="w-full bg-bg border border-border rounded-[10px] px-3 py-2 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50"
+                  className="w-full bg-bg border border-border rounded-[10px] px-3 py-2 text-sm text-text-dark placeholder:text-placeholder focus:outline-none focus:border-primary/50"
                 />
               </div>
               <div>
@@ -780,7 +780,7 @@ function Q6Transfers({ answers, updateAnswer, onNext }) {
                   value={rule.destination}
                   onChange={(e) => updateRule(i, 'destination', e.target.value)}
                   placeholder="555-0123"
-                  className="w-full bg-bg border border-border rounded-[10px] px-3 py-2 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50"
+                  className="w-full bg-bg border border-border rounded-[10px] px-3 py-2 text-sm text-text-dark placeholder:text-placeholder focus:outline-none focus:border-primary/50"
                 />
               </div>
               <div>
@@ -789,7 +789,7 @@ function Q6Transfers({ answers, updateAnswer, onNext }) {
                   value={rule.label}
                   onChange={(e) => updateRule(i, 'label', e.target.value)}
                   placeholder="Dr. Patel — Cell"
-                  className="w-full bg-bg border border-border rounded-[10px] px-3 py-2 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50"
+                  className="w-full bg-bg border border-border rounded-[10px] px-3 py-2 text-sm text-text-dark placeholder:text-placeholder focus:outline-none focus:border-primary/50"
                 />
               </div>
             </div>
@@ -838,7 +838,7 @@ function Q7Knowledge({ answers, updateAnswer, onNext }) {
             value={answers.knowledgeUrl}
             onChange={(e) => { updateAnswer('knowledgeUrl', e.target.value); setDone(false); }}
             placeholder="https://your-website.com"
-            className="flex-1 bg-surface border border-border rounded-[10px] px-4 py-2.5 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50 transition-all duration-200"
+            className="flex-1 bg-surface border border-border rounded-[10px] px-4 py-2.5 text-sm text-text-dark placeholder:text-placeholder focus:outline-none focus:border-primary/50 transition-all duration-200"
           />
           <button
             onClick={simulateCrawl}
@@ -881,7 +881,7 @@ function Q7Knowledge({ answers, updateAnswer, onNext }) {
         <textarea
           rows={3}
           placeholder="Q: Do you accept insurance?&#10;A: Yes, we accept most major dental insurance plans..."
-          className="w-full bg-surface border border-border rounded-[10px] px-4 py-3 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50 transition-all duration-200 resize-none"
+          className="w-full bg-surface border border-border rounded-[10px] px-4 py-3 text-sm text-text-dark placeholder:text-placeholder focus:outline-none focus:border-primary/50 transition-all duration-200 resize-none"
         />
       </div>
 
