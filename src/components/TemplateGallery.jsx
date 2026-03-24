@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { BUSINESS_TYPES, getTemplatesByType } from '../data/templates';
-import { Search, Plus, Clock, ArrowLeft, Workflow, Sparkles, Check, X, LayoutTemplate, Pencil, ChevronsUpDown, ChevronUp, ChevronDown } from 'lucide-react';
+import { Search, Plus, Clock, ArrowLeft, Workflow, Sparkles, Check, X, LayoutTemplate, Pencil, ChevronsUpDown, ChevronUp, ChevronDown, MoreHorizontal, Copy, Trash2, Download } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import {
   useReactTable,
@@ -16,13 +16,32 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 
 /* ───────────────────────────── New Workflow Sidebar ───────────────────────────── */
 
 function NewWorkflowSidebar({ open, onClose, onChooseMax, onStartScratch, onSelectTemplate }) {
   const [sidebarView, setSidebarView] = useState('options'); // 'options' | 'templates'
-  const [selectedType, setSelectedType] = useState('dental');
+  const [selectedType, setSelectedType] = useState('all');
   const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('popular');
   const backdropRef = useRef(null);
 
   // Reset view when sidebar opens
@@ -33,14 +52,28 @@ function NewWorkflowSidebar({ open, onClose, onChooseMax, onStartScratch, onSele
     }
   }, [open]);
 
-  const typeTemplates = getTemplatesByType(selectedType);
-  const filtered = search
-    ? typeTemplates.filter(
-        (t) =>
-          t.name.toLowerCase().includes(search.toLowerCase()) ||
-          t.description.toLowerCase().includes(search.toLowerCase())
-      )
-    : typeTemplates;
+  // "All" shows templates from every business type
+  const allTemplates = BUSINESS_TYPES.flatMap((bt) => getTemplatesByType(bt.id));
+  const typeTemplates = selectedType === 'all' ? allTemplates : getTemplatesByType(selectedType);
+
+  const filtered = useMemo(() => {
+    let result = search
+      ? typeTemplates.filter(
+          (t) =>
+            t.name.toLowerCase().includes(search.toLowerCase()) ||
+            t.description.toLowerCase().includes(search.toLowerCase())
+        )
+      : [...typeTemplates];
+
+    // Sort
+    if (sortBy === 'popular') result.sort((a, b) => (b.popular ? 1 : 0) - (a.popular ? 1 : 0));
+    else if (sortBy === 'fewest') result.sort((a, b) => (a.nodeCount || 0) - (b.nodeCount || 0));
+    else if (sortBy === 'most') result.sort((a, b) => (b.nodeCount || 0) - (a.nodeCount || 0));
+    else if (sortBy === 'quickest') result.sort((a, b) => (a.setupTime || '').localeCompare(b.setupTime || ''));
+    else if (sortBy === 'az') result.sort((a, b) => a.name.localeCompare(b.name));
+
+    return result;
+  }, [typeTemplates, search, sortBy]);
 
   const selectedBusiness = BUSINESS_TYPES.find((b) => b.id === selectedType);
 
@@ -154,8 +187,19 @@ function NewWorkflowSidebar({ open, onClose, onChooseMax, onStartScratch, onSele
           ) : (
             /* ── Template browser ── */
             <div className="p-5">
-              {/* Filter pills */}
+              {/* Filter pills — "All" + business types */}
               <div className="flex flex-wrap gap-2 mb-4">
+                <button
+                  onClick={() => { setSelectedType('all'); setSearch(''); }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-medium border transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 ${
+                    selectedType === 'all'
+                      ? 'bg-primary text-white border-primary shadow-sm'
+                      : 'bg-surface border-border text-text-mid hover:border-slate-300 hover:bg-slate-50 hover:text-text-dark'
+                  }`}
+                >
+                  All
+                  {selectedType === 'all' && <Check className="w-3 h-3 ml-0.5" />}
+                </button>
                 {BUSINESS_TYPES.map((type) => {
                   const TypeIcon = Icons[type.icon] || Icons.Building2;
                   const isActive = selectedType === type.id;
@@ -177,16 +221,30 @@ function NewWorkflowSidebar({ open, onClose, onChooseMax, onStartScratch, onSele
                 })}
               </div>
 
-              {/* Search */}
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-light" />
-                <input
-                  type="text"
-                  placeholder={`Search ${selectedBusiness?.label || ''} workflows...`}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 rounded-[10px] border border-border bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
-                />
+              {/* Search + Sort row */}
+              <div className="flex items-center gap-2 mb-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-light" />
+                  <input
+                    type="text"
+                    placeholder={selectedType === 'all' ? 'Search all workflows...' : `Search ${selectedBusiness?.label || ''} workflows...`}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 rounded-[10px] border border-border bg-surface text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
+                  />
+                </div>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-[120px] text-[12px] h-9 shrink-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="popular">Popular</SelectItem>
+                    <SelectItem value="fewest">Fewest Nodes</SelectItem>
+                    <SelectItem value="most">Most Nodes</SelectItem>
+                    <SelectItem value="quickest">Quickest Setup</SelectItem>
+                    <SelectItem value="az">A → Z</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Template list */}
@@ -294,6 +352,7 @@ function SortButton({ column, children }) {
 
 function WorkflowsTable({ savedFlows, onSelectFlow }) {
   const [sorting, setSorting] = useState([]);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const data = useMemo(
     () => savedFlows.map((f) => ({ ...f, lastModified: getMockDate(f.id) })),
@@ -337,13 +396,32 @@ function WorkflowsTable({ savedFlows, onSelectFlow }) {
       header: () => <span className="sr-only">Actions</span>,
       cell: ({ row }) => (
         <div className="flex justify-end">
-          <button
-            onClick={() => onSelectFlow(row.original)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-text-mid border border-border hover:border-primary/30 hover:text-primary hover:bg-primary/5 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
-          >
-            <Pencil className="w-3.5 h-3.5" />
-            Edit
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-1.5 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30">
+                <MoreHorizontal className="w-4 h-4 text-text-light" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => onSelectFlow(row.original)}>
+                <Pencil className="w-3.5 h-3.5" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => onSelectFlow(row.original)}>
+                <Copy className="w-3.5 h-3.5" />
+                Duplicate
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => {}}>
+                <Download className="w-3.5 h-3.5" />
+                Export JSON
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive" onSelect={() => setDeleteTarget(row.original)}>
+                <Trash2 className="w-3.5 h-3.5" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       ),
       enableSorting: false,
@@ -362,6 +440,23 @@ function WorkflowsTable({ savedFlows, onSelectFlow }) {
   if (savedFlows.length === 0) return null;
 
   return (
+    <>
+    <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete workflow?</AlertDialogTitle>
+          <AlertDialogDescription>
+            <strong>{deleteTarget?.name}</strong> will be permanently deleted. This cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction className="bg-destructive text-white hover:bg-destructive/90" onClick={() => setDeleteTarget(null)}>
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     <div className="bg-surface border border-border rounded-[10px] overflow-hidden">
       <Table>
         <TableHeader className="bg-slate-50/80">
@@ -404,6 +499,7 @@ function WorkflowsTable({ savedFlows, onSelectFlow }) {
         </TableBody>
       </Table>
     </div>
+    </>
   );
 }
 

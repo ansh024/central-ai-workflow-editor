@@ -8,6 +8,18 @@ import VoiceOrb from './VoiceOrb';
 import useAudioPlayer from '../hooks/useAudioPlayer';
 import useVoiceInput from '../hooks/useVoiceInput';
 import useTransitionSound from '../hooks/useTransitionSound';
+import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 
 /* ─────────────────── Step Definitions ─────────────────── */
 
@@ -70,26 +82,7 @@ const STEPS = [
   },
 ];
 
-/* ─────────────────── Exit Confirm Dialog ─────────────────── */
-
-function ExitConfirmDialog({ onConfirm, onCancel }) {
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 backdrop-blur-sm" onClick={(e) => e.stopPropagation()}>
-      <div className="bg-white rounded-[14px] shadow-2xl p-6 w-[340px] border border-border">
-        <h3 className="text-[16px] font-semibold text-text-dark mb-2">Exit Setup Guide?</h3>
-        <p className="text-[13px] text-text-mid mb-5">Your progress will be saved. You can resume anytime from the sidebar.</p>
-        <div className="flex gap-3">
-          <button onClick={onCancel} className="flex-1 py-2.5 rounded-[10px] border border-border text-[13px] font-medium text-text-dark hover:bg-slate-50 transition-colors cursor-pointer focus:outline-none">
-            Cancel
-          </button>
-          <button onClick={onConfirm} className="flex-1 py-2.5 rounded-[10px] bg-red-500 text-white text-[13px] font-medium hover:bg-red-600 transition-colors cursor-pointer focus:outline-none">
-            Exit Setup
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+/* ─────────────────── Exit Confirm — handled inline with AlertDialog ─────────────────── */
 
 /* ─────────────────── Step Content Cards (right 70%) ─────────────────── */
 
@@ -109,12 +102,12 @@ function StepBusinessInfo({ data, onChange }) {
     <div className="space-y-5">
       <div>
         <label className="block text-[13px] font-medium text-text-dark mb-2">Business Name</label>
-        <input
+        <Input
           type="text"
           value={data.businessName || ''}
           onChange={(e) => onChange({ ...data, businessName: e.target.value })}
           placeholder="e.g. Riverside Dental"
-          className="w-full px-4 py-3 rounded-[10px] border border-border text-[14px] text-text-dark placeholder:text-placeholder focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
+          className="text-[14px] focus:ring-primary/30 focus:border-primary"
         />
       </div>
       <div>
@@ -541,12 +534,18 @@ export default function Onboarding({ onBack, onComplete }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-bg flex flex-col">
-      {showExitConfirm && (
-        <ExitConfirmDialog
-          onConfirm={() => { setShowExitConfirm(false); onBack(); }}
-          onCancel={() => setShowExitConfirm(false)}
-        />
-      )}
+      <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Exit Setup Guide?</AlertDialogTitle>
+            <AlertDialogDescription>Your progress will be saved. You can resume anytime from the sidebar.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-white hover:bg-destructive/90" onClick={() => { setShowExitConfirm(false); onBack(); }}>Exit Setup</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Top bar */}
       <div className="h-14 border-b border-border bg-surface flex items-center px-5 shrink-0">
@@ -680,7 +679,8 @@ export default function Onboarding({ onBack, onComplete }) {
               </div>
               <h2 className="text-[20px] font-bold text-text-dark leading-tight">{step.title}</h2>
             </div>
-            <p className="text-[13px] text-text-mid leading-relaxed ml-12">{step.subtitle}</p>
+            <p className="text-[13px] text-text-mid leading-relaxed ml-12 mb-3">{step.subtitle}</p>
+            <Progress value={(currentStep / 8) * 100} className="h-1" />
           </div>
 
           {/* Step form content */}

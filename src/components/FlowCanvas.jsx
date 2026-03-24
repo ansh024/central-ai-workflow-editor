@@ -1,6 +1,6 @@
-import { useState, useCallback, createContext, useContext } from 'react';
+import { useState, useCallback, useEffect, useRef, createContext, useContext } from 'react';
 import { NODE_TYPES, NODE_CATEGORIES } from '../data/nodeDefinitions';
-import { Plus, ChevronRight, ChevronDown, Workflow, GripVertical } from 'lucide-react';
+import { Plus, ChevronRight, ChevronDown, Workflow, GripVertical, Search, X } from 'lucide-react';
 import * as Icons from 'lucide-react';
 
 // Context for expand/collapse state
@@ -86,11 +86,15 @@ function ExpandedBranchHeader({ branch, onCollapse, parentColor }) {
 
 // ── Node Card (trunk node) ──
 function NodeCard({ node, onSelect, isSelected }) {
-  const { onAddNode } = useTree();
+  const { onAddNode, findQuery } = useTree();
   const nodeDef = NODE_TYPES[node.type];
   if (!nodeDef) return null;
   const cat = NODE_CATEGORIES[nodeDef.category];
   const IconComponent = Icons[nodeDef.icon] || Icons.Circle;
+
+  // Find-highlight logic
+  const isMatch = findQuery && nodeDef.label.toLowerCase().includes(findQuery.toLowerCase());
+  const isDimmed = findQuery && !isMatch;
 
   const getPreview = () => {
     if (node.config?.message) return node.config.message;
@@ -112,7 +116,7 @@ function NodeCard({ node, onSelect, isSelected }) {
         isSelected
           ? 'ring-2 ring-primary shadow-md border-primary/20'
           : 'border-border hover:shadow-md hover:-translate-y-0.5 hover:border-slate-300'
-      }`}
+      } ${isDimmed ? 'opacity-30' : ''} ${isMatch ? 'ring-2 ring-amber-400 border-amber-300' : ''}`}
     >
       <div className="absolute left-0 top-2 bottom-2 w-1 rounded-full" style={{ backgroundColor: cat?.colorHex || '#94A3B8' }} />
       <div className="pl-5 pr-4 py-3.5">
@@ -256,6 +260,26 @@ function NodeList({ nodes, depth = 0, onSelect, selectedNodeId, accentColor }) {
 // ── Main FlowCanvas ──
 export default function FlowCanvas({ flowTree, selectedNodeId, onSelectNode, onAddNodeAt, onDropNode }) {
   const [expandedBranches, setExpandedBranches] = useState(new Set());
+  const [findOpen, setFindOpen] = useState(false);
+  const [findQuery, setFindQuery] = useState('');
+  const findInputRef = useRef(null);
+
+  // Cmd+F / Ctrl+F to open finder, Escape to close
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+        e.preventDefault();
+        setFindOpen(true);
+        setTimeout(() => findInputRef.current?.focus(), 50);
+      }
+      if (e.key === 'Escape') {
+        setFindOpen(false);
+        setFindQuery('');
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   const toggleBranch = useCallback((branchId, depth) => {
     setExpandedBranches((prev) => {
@@ -276,6 +300,7 @@ export default function FlowCanvas({ flowTree, selectedNodeId, onSelectNode, onA
     expandedBranches,
     toggleBranch,
     onAddNode: onAddNodeAt,
+    findQuery,
   };
 
   // Handle trigger node
@@ -288,8 +313,28 @@ export default function FlowCanvas({ flowTree, selectedNodeId, onSelectNode, onA
 
   return (
     <TreeContext.Provider value={contextValue}>
+      {/* Floating node finder */}
+      {findOpen && (
+        <div className="absolute top-4 right-4 z-30 flex items-center gap-2 bg-surface border border-border rounded-[10px] shadow-lg px-3 py-2">
+          <Search className="w-3.5 h-3.5 text-text-light shrink-0" />
+          <input
+            ref={findInputRef}
+            type="text"
+            value={findQuery}
+            onChange={(e) => setFindQuery(e.target.value)}
+            placeholder="Find nodes…"
+            className="text-[13px] text-text-dark bg-transparent border-none outline-none w-40 placeholder:text-placeholder"
+          />
+          <button
+            onClick={() => { setFindOpen(false); setFindQuery(''); }}
+            className="text-text-light hover:text-text-mid cursor-pointer focus:outline-none"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
       <div
-        className="flex-1 overflow-auto bg-bg p-8"
+        className="flex-1 overflow-auto bg-bg p-8 relative"
         onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
         onDrop={(e) => {
           e.preventDefault();

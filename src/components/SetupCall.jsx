@@ -9,6 +9,18 @@ import {
   Calendar as CalIcon, Upload, Globe, FileText, Link2, Phone, Plus, Trash2,
   Check, AlertCircle,
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 
 // ── Question Data (for UI rendering) ──
 const INDUSTRIES = [
@@ -41,31 +53,7 @@ const CALENDARS = [
 
 const NUDGE_TEXT = "Hey there — I'm waiting for you to click next and start. Excited to see what we build in this workflow!";
 
-// ── Exit Confirmation Dialog ──
-function ExitConfirmDialog({ onConfirm, onCancel }) {
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={(e) => e.stopPropagation()}>
-      <div className="bg-white rounded-[10px] border border-border p-6 max-w-sm w-full mx-4" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.12)' }}>
-        <h3 className="text-base font-semibold text-text-dark mb-2">Exit Setup?</h3>
-        <p className="text-sm text-text-mid mb-6">Are you sure you want to close? Your progress will be lost.</p>
-        <div className="flex items-center gap-3 justify-end">
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 rounded-[10px] text-sm font-medium text-text-mid hover:bg-bg transition-colors duration-200 cursor-pointer focus:outline-none"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onConfirm}
-            className="px-4 py-2 rounded-[10px] text-sm font-medium bg-[#b3261e] text-white hover:bg-[#932018] transition-colors duration-200 cursor-pointer focus:outline-none"
-          >
-            Exit Setup
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+// ── Exit Confirmation — handled inline with AlertDialog now ──
 
 // ── Main SetupCall Component ──
 export default function SetupCall({ onComplete, onBack }) {
@@ -152,7 +140,18 @@ export default function SetupCall({ onComplete, onBack }) {
   if (stage === 'welcome') {
     return (
       <div className="fixed inset-0 z-50 bg-bg flex flex-col items-center justify-center px-6">
-        {showExitConfirm && <ExitConfirmDialog onConfirm={confirmExit} onCancel={() => setShowExitConfirm(false)} />}
+        <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Exit Setup?</AlertDialogTitle>
+            <AlertDialogDescription>Are you sure you want to close? Your progress will be lost.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-white hover:bg-destructive/90" onClick={confirmExit}>Exit Setup</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
         <ExitButton />
 
         {/* Voice orb */}
@@ -191,7 +190,18 @@ export default function SetupCall({ onComplete, onBack }) {
   if (stage === 'reveal') {
     return (
       <div className="fixed inset-0 z-50 bg-bg flex flex-col items-center justify-center px-8">
-        {showExitConfirm && <ExitConfirmDialog onConfirm={confirmExit} onCancel={() => setShowExitConfirm(false)} />}
+        <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Exit Setup?</AlertDialogTitle>
+            <AlertDialogDescription>Are you sure you want to close? Your progress will be lost.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-white hover:bg-destructive/90" onClick={confirmExit}>Exit Setup</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
         <ExitButton />
 
         <VoiceOrb state="speaking" size="small" />
@@ -236,7 +246,18 @@ export default function SetupCall({ onComplete, onBack }) {
   // ── Stage: Q&A ──
   return (
     <div className="fixed inset-0 z-50 bg-bg flex">
-      {showExitConfirm && <ExitConfirmDialog onConfirm={confirmExit} onCancel={() => setShowExitConfirm(false)} />}
+      <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Exit Setup?</AlertDialogTitle>
+            <AlertDialogDescription>Are you sure you want to close? Your progress will be lost.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive text-white hover:bg-destructive/90" onClick={confirmExit}>Exit Setup</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <ExitButton />
 
       {/* Left Panel */}
@@ -257,18 +278,7 @@ export default function SetupCall({ onComplete, onBack }) {
             <span className="text-xs font-medium text-text-mid">Question {currentQuestion} of 7</span>
             <span className="text-xs text-text-light">{Math.round((currentQuestion / 7) * 100)}%</span>
           </div>
-          <div className="flex gap-1.5">
-            {Array.from({ length: 7 }, (_, i) => (
-              <div
-                key={i}
-                className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-                  i + 1 < currentQuestion ? 'bg-[#34c759]' :
-                  i + 1 === currentQuestion ? 'bg-primary' :
-                  'bg-border'
-                }`}
-              />
-            ))}
-          </div>
+          <Progress value={(currentQuestion / 7) * 100} className="h-1.5" />
         </div>
 
         {/* Transcript */}

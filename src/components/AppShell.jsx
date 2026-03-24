@@ -5,6 +5,7 @@ import {
   PhoneIncoming, MessageCircle, ListChecks, LayoutGrid, Calendar,
   Search, Paperclip, ArrowUp, Rocket,
 } from 'lucide-react';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 
 const SIDEBAR_SECTIONS = [
   {
@@ -58,6 +59,7 @@ export default function AppShell({ activeView, onNavigate, onStartOnboarding, ch
   }
 
   return (
+    <TooltipProvider>
     <div className="h-screen flex flex-col bg-bg overflow-hidden">
       {/* Top Bar */}
       <header className="h-12 border-b border-border bg-surface flex items-center px-4 shrink-0 z-20">
@@ -256,7 +258,7 @@ export default function AppShell({ activeView, onNavigate, onStartOnboarding, ch
                   <input
                     type="text"
                     placeholder="Schedule meetings from email threads"
-                    className="w-full text-[15px] text-text-dark placeholder:text-placeholder focus:outline-none mb-3"
+                    className="w-full text-[15px] text-text-dark placeholder:text-placeholder focus:outline-none mb-3 bg-transparent border-none outline-none"
                   />
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -334,5 +336,6 @@ export default function AppShell({ activeView, onNavigate, onStartOnboarding, ch
         </main>
       </div>
     </div>
+    </TooltipProvider>
   );
 }

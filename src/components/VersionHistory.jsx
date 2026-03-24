@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { X, RotateCcw, Eye } from 'lucide-react';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 function formatDate(date) {
   if (!date) return '';
@@ -13,7 +15,21 @@ function formatTime(date) {
 }
 
 export default function VersionHistory({ versions, activeVersionId, onRestore, onClose }) {
-  const sorted = [...versions].sort((a, b) => b.version - a.version);
+  const [dateFilter, setDateFilter] = useState('all');
+
+  const filterCutoff = () => {
+    if (dateFilter === 'all') return null;
+    const d = new Date();
+    if (dateFilter === '7d') d.setDate(d.getDate() - 7);
+    else if (dateFilter === '30d') d.setDate(d.getDate() - 30);
+    else if (dateFilter === '90d') d.setDate(d.getDate() - 90);
+    return d;
+  };
+
+  const cutoff = filterCutoff();
+  const sorted = [...versions]
+    .filter((v) => !cutoff || new Date(v.timestamp) >= cutoff)
+    .sort((a, b) => b.version - a.version);
 
   return (
     <>
@@ -23,14 +39,27 @@ export default function VersionHistory({ versions, activeVersionId, onRestore, o
       {/* Panel */}
       <div className="fixed right-0 top-0 bottom-0 w-[400px] bg-surface border-l border-border z-50 flex flex-col animate-in slide-in-from-right duration-200 shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="text-[15px] font-semibold text-text-dark">Version History</h2>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-50 transition-colors duration-200 cursor-pointer focus:outline-none"
-          >
-            <X className="w-4.5 h-4.5 text-text-mid" />
-          </button>
+        <div className="px-6 py-4 border-b border-border">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-[15px] font-semibold text-text-dark">Version History</h2>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg hover:bg-slate-50 transition-colors duration-200 cursor-pointer focus:outline-none"
+            >
+              <X className="w-4.5 h-4.5 text-text-mid" />
+            </button>
+          </div>
+          <Select value={dateFilter} onValueChange={setDateFilter}>
+            <SelectTrigger className="text-[12px] h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Time</SelectItem>
+              <SelectItem value="7d">Last 7 Days</SelectItem>
+              <SelectItem value="30d">Last 30 Days</SelectItem>
+              <SelectItem value="90d">Last 90 Days</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Version List */}

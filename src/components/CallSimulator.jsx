@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { NODE_TYPES, NODE_CATEGORIES } from '../data/nodeDefinitions';
 import { X, Send, RotateCcw, Phone, PhoneOff, Volume2 } from 'lucide-react';
 import * as Icons from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const SIMULATED_RESPONSES = {
   greeting: (config) => ({
@@ -246,7 +248,8 @@ export default function CallSimulator({ nodes, onClose }) {
         {/* Content: Flow + Chat */}
         <div className="flex-1 flex overflow-hidden">
           {/* Left: Mini flow visualization */}
-          <div className="w-64 border-r border-border bg-bg overflow-y-auto p-4 shrink-0">
+          <div className="w-64 border-r border-border bg-bg shrink-0 flex flex-col">
+          <ScrollArea className="flex-1 p-4">
             <div className="text-[11px] font-semibold text-text-light uppercase tracking-wider mb-3">Flow Path</div>
             <div className="space-y-1">
               {linearPath.map((node, i) => {
@@ -279,6 +282,7 @@ export default function CallSimulator({ nodes, onClose }) {
                 );
               })}
             </div>
+          </ScrollArea>
           </div>
 
           {/* Right: Chat */}
@@ -302,7 +306,8 @@ export default function CallSimulator({ nodes, onClose }) {
             ) : (
               <>
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-5 space-y-3">
+                <ScrollArea className="flex-1">
+                <div className="p-5 space-y-3">
                   {messages.map((msg, i) => (
                     <div key={i} className={`flex ${msg.speaker === 'caller' ? 'justify-end' : 'justify-start'}`}>
                       <div
@@ -342,6 +347,7 @@ export default function CallSimulator({ nodes, onClose }) {
 
                   <div ref={messagesEndRef} />
                 </div>
+                </ScrollArea>
 
                 {/* Suggested responses */}
                 {suggestedResponses.length > 0 && (
@@ -361,14 +367,14 @@ export default function CallSimulator({ nodes, onClose }) {
                 {/* Input */}
                 <div className="px-5 py-3 border-t border-border">
                   <div className="flex items-center gap-2">
-                    <input
+                    <Input
                       type="text"
                       value={userInput}
                       onChange={(e) => setUserInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                       placeholder={callEnded ? 'Call ended. Click "Try Again" to restart.' : 'Type a caller response...'}
                       disabled={callEnded || !isCallActive}
-                      className="flex-1 px-3.5 py-2 rounded-lg border border-border text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary disabled:opacity-50 transition-all"
+                      className="flex-1 text-[13px] focus:ring-primary/30 focus:border-primary"
                     />
                     <button
                       onClick={() => handleSend()}

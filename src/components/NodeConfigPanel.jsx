@@ -2,9 +2,27 @@ import { useState } from 'react';
 import { NODE_TYPES, NODE_CATEGORIES } from '../data/nodeDefinitions';
 import { X, ChevronDown, ChevronRight, Trash2, Volume2, MousePointerClick } from 'lucide-react';
 import * as Icons from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
 
 export default function NodeConfigPanel({ node, onUpdate, onDelete, onClose }) {
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   if (!node) {
     return (
@@ -36,12 +54,12 @@ export default function NodeConfigPanel({ node, onUpdate, onDelete, onClose }) {
       case 'text':
         return (
           <div key={field.key} className="mb-4">
-            <label className="block text-[13px] font-medium text-text-dark mb-1.5">{field.label}</label>
-            <input
+            <Label className="text-[13px] font-medium text-text-dark mb-1.5 block">{field.label}</Label>
+            <Input
               type="text"
               value={value || ''}
               onChange={(e) => handleFieldChange(field.key, e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg border border-border text-[13px] text-text-dark bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 placeholder:text-placeholder"
+              className="text-[13px] focus:ring-primary/30 focus:border-primary"
               placeholder={`Enter ${field.label.toLowerCase()}`}
             />
           </div>
@@ -49,12 +67,12 @@ export default function NodeConfigPanel({ node, onUpdate, onDelete, onClose }) {
       case 'textarea':
         return (
           <div key={field.key} className="mb-4">
-            <label className="block text-[13px] font-medium text-text-dark mb-1.5">{field.label}</label>
-            <textarea
+            <Label className="text-[13px] font-medium text-text-dark mb-1.5 block">{field.label}</Label>
+            <Textarea
               value={value || ''}
               onChange={(e) => handleFieldChange(field.key, e.target.value)}
               rows={3}
-              className="w-full px-3 py-2.5 rounded-lg border border-border text-[13px] text-text-dark bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 resize-none placeholder:text-placeholder"
+              className="text-[13px] focus:ring-primary/30 focus:border-primary resize-none"
               placeholder={`Enter ${field.label.toLowerCase()}`}
             />
             <div className="flex items-center justify-between mt-1">
@@ -66,53 +84,51 @@ export default function NodeConfigPanel({ node, onUpdate, onDelete, onClose }) {
       case 'select':
         return (
           <div key={field.key} className="mb-4">
-            <label className="block text-[13px] font-medium text-text-dark mb-1.5">{field.label}</label>
-            <select
-              value={value || ''}
-              onChange={(e) => handleFieldChange(field.key, e.target.value)}
-              className="w-full px-3 py-2.5 rounded-lg border border-border text-[13px] text-text-dark bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200 cursor-pointer appearance-none"
-              style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center' }}
-            >
-              {(field.options || []).map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
+            <Label className="text-[13px] font-medium text-text-dark mb-1.5 block">{field.label}</Label>
+            <Select value={value || ''} onValueChange={(v) => handleFieldChange(field.key, v)}>
+              <SelectTrigger className="text-[13px] focus:ring-primary/30 focus:border-primary">
+                <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
+              </SelectTrigger>
+              <SelectContent>
+                {(field.options || []).map((opt) => (
+                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         );
       case 'toggle':
         return (
           <div key={field.key} className="mb-4 flex items-center justify-between py-1">
-            <label className="text-[13px] font-medium text-text-dark cursor-pointer" onClick={() => handleFieldChange(field.key, !value)}>
-              {field.label}
-            </label>
-            <button
-              onClick={() => handleFieldChange(field.key, !value)}
-              role="switch"
-              aria-checked={!!value}
-              className={`relative w-11 h-6 rounded-full transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 ${value ? 'bg-primary' : 'bg-slate-200'}`}
+            <Label
+              htmlFor={`toggle-${field.key}`}
+              className="text-[13px] font-medium text-text-dark cursor-pointer"
             >
-              <span
-                className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${value ? 'translate-x-6' : 'translate-x-1'}`}
-              />
-            </button>
+              {field.label}
+            </Label>
+            <Switch
+              id={`toggle-${field.key}`}
+              checked={!!value}
+              onCheckedChange={(checked) => handleFieldChange(field.key, checked)}
+            />
           </div>
         );
       case 'number':
         return (
           <div key={field.key} className="mb-4">
-            <label className="block text-[13px] font-medium text-text-dark mb-1.5">{field.label}</label>
-            <input
+            <Label className="text-[13px] font-medium text-text-dark mb-1.5 block">{field.label}</Label>
+            <Input
               type="number"
               value={value ?? ''}
               onChange={(e) => handleFieldChange(field.key, Number(e.target.value))}
-              className="w-full px-3 py-2.5 rounded-lg border border-border text-[13px] text-text-dark bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all duration-200"
+              className="text-[13px] focus:ring-primary/30 focus:border-primary"
             />
           </div>
         );
       case 'multiselect':
         return (
           <div key={field.key} className="mb-4">
-            <label className="block text-[13px] font-medium text-text-dark mb-2">{field.label}</label>
+            <Label className="text-[13px] font-medium text-text-dark mb-2 block">{field.label}</Label>
             <div className="flex flex-wrap gap-1.5">
               {(field.options || []).map((opt) => {
                 const selected = (value || []).includes(opt);
@@ -167,46 +183,69 @@ export default function NodeConfigPanel({ node, onUpdate, onDelete, onClose }) {
       </div>
 
       {/* Fields */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {nodeDef.configFields.map(renderField)}
+      <ScrollArea className="flex-1">
+        <div className="p-4">
+          {nodeDef.configFields.map(renderField)}
 
-        {/* Preview button for greeting/record nodes */}
-        {(node.type === 'greeting' || node.type === 'record_message') && (
-          <button className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-border text-[13px] text-text-mid hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 mb-4 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30">
-            <Volume2 className="w-4 h-4 text-primary" />
-            <span>Hear this greeting</span>
-          </button>
-        )}
-
-        {/* Advanced Settings */}
-        {nodeDef.advancedFields && nodeDef.advancedFields.length > 0 && (
-          <div className="border-t border-border pt-4 mt-2">
-            <button
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              className="flex items-center gap-2 text-[13px] font-medium text-text-mid hover:text-text-dark transition-colors duration-200 mb-3 cursor-pointer focus:outline-none"
-            >
-              {showAdvanced ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-              Advanced Settings
+          {/* Preview button for greeting/record nodes */}
+          {(node.type === 'greeting' || node.type === 'record_message') && (
+            <button className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-border text-[13px] text-text-mid hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 mb-4 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30">
+              <Volume2 className="w-4 h-4 text-primary" />
+              <span>Hear this greeting</span>
             </button>
-            {showAdvanced && (
-              <div className="animate-in slide-in-from-top-1 duration-200">
-                {nodeDef.advancedFields.map(renderField)}
+          )}
+
+          {/* Advanced Settings — shadcn Collapsible */}
+          {nodeDef.advancedFields && nodeDef.advancedFields.length > 0 && (
+            <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+              <div className="border-t border-border pt-4 mt-2">
+                <CollapsibleTrigger className="flex items-center gap-2 text-[13px] font-medium text-text-mid hover:text-text-dark transition-colors duration-200 mb-3 cursor-pointer focus:outline-none w-full text-left">
+                  {showAdvanced ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                  Advanced Settings
+                </CollapsibleTrigger>
+                <CollapsibleContent className="animate-in slide-in-from-top-1 duration-200">
+                  {nodeDef.advancedFields.map(renderField)}
+                </CollapsibleContent>
               </div>
-            )}
-          </div>
-        )}
-      </div>
+            </Collapsible>
+          )}
+        </div>
+      </ScrollArea>
 
       {/* Delete */}
       <div className="px-4 py-3 border-t border-border">
         <button
-          onClick={() => onDelete(node.id)}
+          onClick={() => setShowDeleteConfirm(true)}
           className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-[13px] text-red-500 hover:bg-red-50 hover:text-red-600 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-200"
         >
           <Trash2 className="w-4 h-4" />
           Delete Node
         </button>
       </div>
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this node?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The <strong>{nodeDef.label}</strong> node and its configuration will be removed from the flow. This action can be undone with Ctrl+Z.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white hover:bg-destructive/90"
+              onClick={() => {
+                setShowDeleteConfirm(false);
+                onDelete(node.id);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

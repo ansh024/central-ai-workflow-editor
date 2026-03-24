@@ -5,8 +5,32 @@ import NodeConfigPanel from './NodeConfigPanel';
 import VersionHistory from './VersionHistory';
 import { NODE_TYPES } from '../data/nodeDefinitions';
 import {
-  Undo2, Redo2, Play, Upload, MoreHorizontal, ChevronLeft, AlertTriangle, CheckCircle2, History, X,
+  Undo2, Redo2, Play, Upload, MoreHorizontal, ChevronLeft, AlertTriangle, CheckCircle2, History,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from '@/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from '@/components/ui/tooltip';
+import { Badge } from '@/components/ui/badge';
 
 let nextId = 100;
 
@@ -17,8 +41,8 @@ export default function FlowEditor({ initialFlow, flowName: initName, onBack, on
   const [libraryCollapsed, setLibraryCollapsed] = useState(false);
   const [flowName, setFlowName] = useState(initName || 'Untitled Flow');
   const [status, setStatus] = useState('Draft');
-  const [showMenu, setShowMenu] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Version history
   const [versions, setVersions] = useState([
@@ -248,165 +272,198 @@ export default function FlowEditor({ initialFlow, flowName: initName, onBack, on
   const issues = getIssues();
   const totalNodes = countNodes(flowTree);
 
+  const statusBadgeVariant =
+    status === 'Published' ? 'default' :
+    status === 'Modified' ? 'outline' :
+    'secondary';
+
   return (
-    <div className="h-screen flex flex-col bg-bg">
-      {/* Top Bar */}
-      <div className="h-14 border-b border-border bg-surface flex items-center px-4 gap-3 shrink-0">
-        <button
-          onClick={onBack}
-          className="p-1.5 rounded-lg hover:bg-slate-50 transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
-          title="Back to gallery"
-        >
-          <ChevronLeft className="w-5 h-5 text-text-mid" />
-        </button>
-
-        <div className="h-6 w-px bg-border" />
-
-        <input
-          type="text"
-          value={flowName}
-          onChange={(e) => setFlowName(e.target.value)}
-          className="text-sm font-semibold text-text-dark bg-transparent border-none outline-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-2 focus:ring-primary/20 px-2.5 py-1.5 rounded-lg transition-all duration-200 max-w-[240px]"
-        />
-
-        {/* Status badge */}
-        <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold ${
-          status === 'Published' ? 'bg-emerald-50 text-emerald-700' :
-          status === 'Modified' ? 'bg-amber-50 text-amber-700' :
-          'bg-slate-100 text-text-mid'
-        }`}>
-          {status}
-        </span>
-
-        {status === 'Modified' && (
+    <TooltipProvider>
+      <div className="h-screen flex flex-col bg-bg">
+        {/* Top Bar */}
+        <div className="h-14 border-b border-border bg-surface flex items-center px-4 gap-3 shrink-0">
           <button
-            onClick={handleDiscard}
-            className="text-[11px] text-text-light hover:text-red-500 transition-colors duration-200 cursor-pointer focus:outline-none"
+            onClick={onBack}
+            className="p-1.5 rounded-lg hover:bg-slate-50 transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
+            title="Back to gallery"
           >
-            Discard changes
+            <ChevronLeft className="w-5 h-5 text-text-mid" />
           </button>
-        )}
 
-        <div className="flex-1" />
+          <div className="h-6 w-px bg-border" />
 
-        {/* Undo/Redo */}
-        <div className="flex items-center gap-0.5 bg-slate-50 rounded-lg p-0.5">
-          <button
-            onClick={undo}
-            disabled={undoStack.length === 0}
-            className="p-1.5 rounded-md hover:bg-white disabled:opacity-30 transition-all duration-200 cursor-pointer disabled:cursor-not-allowed focus:outline-none"
-            title="Undo"
-          >
-            <Undo2 className="w-4 h-4 text-text-mid" />
-          </button>
-          <button
-            onClick={redo}
-            disabled={redoStack.length === 0}
-            className="p-1.5 rounded-md hover:bg-white disabled:opacity-30 transition-all duration-200 cursor-pointer disabled:cursor-not-allowed focus:outline-none"
-            title="Redo"
-          >
-            <Redo2 className="w-4 h-4 text-text-mid" />
-          </button>
-        </div>
+          <input
+            type="text"
+            value={flowName}
+            onChange={(e) => setFlowName(e.target.value)}
+            className="text-sm font-semibold text-text-dark bg-transparent border-none outline-none hover:bg-slate-50 focus:bg-slate-50 focus:ring-2 focus:ring-primary/20 px-2.5 py-1.5 rounded-lg transition-all duration-200 max-w-[240px]"
+          />
 
-        <div className="h-6 w-px bg-border" />
+          {/* Status badge */}
+          <Badge variant={statusBadgeVariant}>
+            {status}
+          </Badge>
 
-        {/* Test Flow */}
-        <button
-          onClick={onOpenSimulator}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm font-medium text-text-dark hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 cursor-pointer focus:outline-none"
-        >
-          <Play className="w-3.5 h-3.5 text-primary" />
-          Test Flow
-        </button>
-
-        {/* Publish */}
-        <button
-          onClick={handlePublish}
-          className="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-dark transition-all duration-200 cursor-pointer shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2"
-        >
-          <Upload className="w-3.5 h-3.5" />
-          Publish
-        </button>
-
-        {/* More menu */}
-        <div className="relative">
-          <button
-            onClick={() => setShowMenu(!showMenu)}
-            className="p-2 rounded-lg hover:bg-slate-50 transition-colors duration-200 cursor-pointer focus:outline-none"
-          >
-            <MoreHorizontal className="w-4 h-4 text-text-mid" />
-          </button>
-          {showMenu && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-              <div className="absolute right-0 top-full mt-1.5 w-52 bg-surface border border-border rounded-xl shadow-lg z-20 py-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                <button
-                  onClick={() => { setShowVersionHistory(true); setShowMenu(false); }}
-                  className="w-full text-left px-4 py-2.5 text-[13px] text-text-dark hover:bg-slate-50 transition-colors duration-150 cursor-pointer flex items-center gap-2.5"
-                >
-                  <History className="w-4 h-4 text-text-light" />
-                  Version History
-                </button>
-                <button className="w-full text-left px-4 py-2.5 text-[13px] text-text-dark hover:bg-slate-50 transition-colors duration-150 cursor-pointer">Duplicate Flow</button>
-                <button className="w-full text-left px-4 py-2.5 text-[13px] text-text-dark hover:bg-slate-50 transition-colors duration-150 cursor-pointer">Export</button>
-                <div className="h-px bg-border my-1" />
-                <button className="w-full text-left px-4 py-2.5 text-[13px] text-red-500 hover:bg-red-50 transition-colors duration-150 cursor-pointer">Delete Flow</button>
-              </div>
-            </>
+          {status === 'Modified' && (
+            <button
+              onClick={handleDiscard}
+              className="text-[11px] text-text-light hover:text-red-500 transition-colors duration-200 cursor-pointer focus:outline-none"
+            >
+              Discard changes
+            </button>
           )}
-        </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        <NodeLibrary
-          onAddNode={(type) => handleDropNode(type)}
-          collapsed={libraryCollapsed}
-          onToggle={() => setLibraryCollapsed(!libraryCollapsed)}
-        />
-        <FlowCanvas
-          flowTree={flowTree}
-          selectedNodeId={selectedNodeId}
-          onSelectNode={setSelectedNodeId}
-          onAddNodeAt={handleAddNode}
-          onDropNode={handleDropNode}
-        />
-        <NodeConfigPanel
-          node={selectedNode}
-          onUpdate={handleUpdateNode}
-          onDelete={handleDeleteNode}
-          onClose={() => setSelectedNodeId(null)}
-        />
-      </div>
+          <div className="flex-1" />
 
-      {/* Bottom Validation Bar */}
-      <div className="h-10 border-t border-border bg-surface flex items-center px-4 shrink-0">
-        {issues.length > 0 ? (
-          <button className="flex items-center gap-2 text-amber-600 cursor-pointer hover:text-amber-700 transition-colors duration-200 focus:outline-none">
-            <AlertTriangle className="w-3.5 h-3.5" />
-            <span className="text-xs font-semibold">{issues.length} issue{issues.length > 1 ? 's' : ''} found</span>
-            <span className="text-[11px] text-text-light ml-1 font-normal">— {issues[0]}</span>
-          </button>
-        ) : (
-          <div className="flex items-center gap-2 text-emerald-600">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span className="text-xs font-semibold">Flow is valid</span>
+          {/* Undo/Redo */}
+          <div className="flex items-center gap-0.5 bg-slate-50 rounded-lg p-0.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={undo}
+                  disabled={undoStack.length === 0}
+                  className="p-1.5 rounded-md hover:bg-white disabled:opacity-30 transition-all duration-200 cursor-pointer disabled:cursor-not-allowed focus:outline-none"
+                >
+                  <Undo2 className="w-4 h-4 text-text-mid" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Undo</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={redo}
+                  disabled={redoStack.length === 0}
+                  className="p-1.5 rounded-md hover:bg-white disabled:opacity-30 transition-all duration-200 cursor-pointer disabled:cursor-not-allowed focus:outline-none"
+                >
+                  <Redo2 className="w-4 h-4 text-text-mid" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Redo</TooltipContent>
+            </Tooltip>
           </div>
-        )}
-        <div className="flex-1" />
-        <span className="text-[11px] text-text-light font-medium">{totalNodes} nodes</span>
-      </div>
 
-      {/* Version History Panel */}
-      {showVersionHistory && (
-        <VersionHistory
-          versions={versions}
-          activeVersionId={activeVersionId}
-          onRestore={handleRestore}
-          onClose={() => setShowVersionHistory(false)}
-        />
-      )}
-    </div>
+          <div className="h-6 w-px bg-border" />
+
+          {/* Test Flow */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onOpenSimulator}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm font-medium text-text-dark hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 cursor-pointer focus:outline-none"
+              >
+                <Play className="w-3.5 h-3.5 text-primary" />
+                Test Flow
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Run a simulation of this flow</TooltipContent>
+          </Tooltip>
+
+          {/* Publish */}
+          <button
+            onClick={handlePublish}
+            className="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-dark transition-all duration-200 cursor-pointer shadow-sm hover:shadow focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            Publish
+          </button>
+
+          {/* More menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-2 rounded-lg hover:bg-slate-50 transition-colors duration-200 cursor-pointer focus:outline-none">
+                <MoreHorizontal className="w-4 h-4 text-text-mid" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={() => setShowVersionHistory(true)}>
+                <History className="w-4 h-4 text-text-light" />
+                Version History
+              </DropdownMenuItem>
+              <DropdownMenuItem>Duplicate</DropdownMenuItem>
+              <DropdownMenuItem>Export</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                onSelect={() => setShowDeleteConfirm(true)}
+              >
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 flex overflow-hidden">
+          <NodeLibrary
+            onAddNode={(type) => handleDropNode(type)}
+            collapsed={libraryCollapsed}
+            onToggle={() => setLibraryCollapsed(!libraryCollapsed)}
+          />
+          <FlowCanvas
+            flowTree={flowTree}
+            selectedNodeId={selectedNodeId}
+            onSelectNode={setSelectedNodeId}
+            onAddNodeAt={handleAddNode}
+            onDropNode={handleDropNode}
+          />
+          <NodeConfigPanel
+            node={selectedNode}
+            onUpdate={handleUpdateNode}
+            onDelete={handleDeleteNode}
+            onClose={() => setSelectedNodeId(null)}
+          />
+        </div>
+
+        {/* Bottom Validation Bar */}
+        <div className="h-10 border-t border-border bg-surface flex items-center px-4 shrink-0">
+          {issues.length > 0 ? (
+            <button className="flex items-center gap-2 text-amber-600 cursor-pointer hover:text-amber-700 transition-colors duration-200 focus:outline-none">
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span className="text-xs font-semibold">{issues.length} issue{issues.length > 1 ? 's' : ''} found</span>
+              <span className="text-[11px] text-text-light ml-1 font-normal">— {issues[0]}</span>
+            </button>
+          ) : (
+            <div className="flex items-center gap-2 text-emerald-600">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span className="text-xs font-semibold">Flow is valid</span>
+            </div>
+          )}
+          <div className="flex-1" />
+          <span className="text-[11px] text-text-light font-medium">{totalNodes} nodes</span>
+        </div>
+
+        {/* Version History Panel */}
+        {showVersionHistory && (
+          <VersionHistory
+            versions={versions}
+            activeVersionId={activeVersionId}
+            onRestore={handleRestore}
+            onClose={() => setShowVersionHistory(false)}
+          />
+        )}
+
+        {/* Delete Workflow Confirmation */}
+        <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete workflow?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. The workflow and all its version history will be permanently deleted.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-white hover:bg-destructive/90"
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </TooltipProvider>
   );
 }
