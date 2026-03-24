@@ -35,8 +35,8 @@ const CALENDARS = [
   { id: 'calendly', label: 'Calendly', color: '#006BFF' },
   { id: 'calcom', label: 'Cal.com', color: '#292929' },
   { id: 'acuity', label: 'Acuity', color: '#01A39D' },
-  { id: 'other', label: 'Other Tool', color: '#94A3B8' },
-  { id: 'manual', label: 'No Tool (Manual)', color: '#F59E0B' },
+  { id: 'other', label: 'Other Tool', color: '#94969b' },
+  { id: 'manual', label: 'No Tool (Manual)', color: '#e8b931' },
 ];
 
 const NUDGE_TEXT = "Hey there — I'm waiting for you to click next and start. Excited to see what we build in this workflow!";
@@ -45,19 +45,19 @@ const NUDGE_TEXT = "Hey there — I'm waiting for you to click next and start. E
 function ExitConfirmDialog({ onConfirm, onCancel }) {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={(e) => e.stopPropagation()}>
-      <div className="bg-white rounded-2xl shadow-2xl border border-border p-6 max-w-sm w-full mx-4">
+      <div className="bg-white rounded-[10px] border border-border p-6 max-w-sm w-full mx-4" style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.12)' }}>
         <h3 className="text-base font-semibold text-text-dark mb-2">Exit Setup?</h3>
         <p className="text-sm text-text-mid mb-6">Are you sure you want to close? Your progress will be lost.</p>
         <div className="flex items-center gap-3 justify-end">
           <button
             onClick={onCancel}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-text-mid hover:bg-bg transition-colors duration-200 cursor-pointer focus:outline-none"
+            className="px-4 py-2 rounded-[10px] text-sm font-medium text-text-mid hover:bg-bg transition-colors duration-200 cursor-pointer focus:outline-none"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors duration-200 cursor-pointer focus:outline-none shadow-sm"
+            className="px-4 py-2 rounded-[10px] text-sm font-medium bg-[#b3261e] text-white hover:bg-[#932018] transition-colors duration-200 cursor-pointer focus:outline-none"
           >
             Exit Setup
           </button>
@@ -91,7 +91,6 @@ export default function SetupCall({ onComplete, onBack }) {
     if (!startedRef.current) {
       startedRef.current = true;
       startConversation();
-      // Play transition sound + intro speech (audio unlocked by "Create with Max" click)
       introSpokenRef.current = true;
       transitionSound.play();
       setTimeout(() => speakIntro(), 200);
@@ -142,7 +141,7 @@ export default function SetupCall({ onComplete, onBack }) {
     <button
       data-exit-btn
       onClick={handleExit}
-      className="absolute top-5 right-5 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-text-light hover:text-text-dark hover:bg-border/40 transition-colors duration-200 cursor-pointer focus:outline-none z-10"
+      className="absolute top-5 right-5 flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] text-text-light hover:text-text-dark hover:bg-[#e9ebee] transition-colors duration-200 cursor-pointer focus:outline-none z-10"
     >
       <X className="w-4 h-4" />
       <span className="text-xs font-medium">Exit</span>
@@ -163,9 +162,9 @@ export default function SetupCall({ onComplete, onBack }) {
 
         {/* Greeting text */}
         <div className="max-w-sm text-center">
-          <p className="text-xl font-semibold text-text-dark leading-relaxed">
-            Hi there! I'm Max <span role="img" aria-label="wave">&#x1F44B;</span>
-          </p>
+          <h1 className="text-[22px] font-semibold text-text-dark leading-relaxed">
+            Hi there! I'm Max
+          </h1>
           <p className="mt-3 text-text-mid text-[15px] leading-relaxed">
             I'm here to help you set up your voice receptionist in about 3 minutes.
           </p>
@@ -175,13 +174,14 @@ export default function SetupCall({ onComplete, onBack }) {
         <button
           onClick={() => {
             clearTimeout(nudgeTimerRef.current);
-            introSpokenRef.current = true; // skip intro if clicking Next directly
+            introSpokenRef.current = true;
             transitionSound.play();
             beginQuestions();
           }}
-          className="mt-10 w-full max-w-sm px-6 py-4 rounded-2xl bg-primary text-white text-base font-semibold hover:bg-primary-dark transition-colors duration-200 cursor-pointer focus:outline-none shadow-lg shadow-primary/20"
+          className="mt-10 w-full max-w-sm px-6 py-3.5 rounded-[10px] bg-primary text-white text-[15px] font-semibold hover:bg-primary-dark transition-colors duration-200 cursor-pointer focus:outline-none"
+          style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
         >
-          Next
+          Let's Get Started
         </button>
       </div>
     );
@@ -203,27 +203,28 @@ export default function SetupCall({ onComplete, onBack }) {
         </p>
 
         {/* Mini flow preview */}
-        <div className="w-full max-w-2xl bg-surface rounded-2xl border border-border p-6 mb-8 shadow-sm">
+        <div className="w-full max-w-2xl bg-surface rounded-[10px] border border-border p-6 mb-8" style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
           <SetupFlowPreview answers={answers} compact />
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => onComplete(answers, 'test')}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white font-medium hover:bg-primary-dark transition-colors duration-200 cursor-pointer focus:outline-none shadow-lg shadow-primary/20"
+            className="flex items-center gap-2 px-6 py-3 rounded-[10px] bg-primary text-white font-medium hover:bg-primary-dark transition-colors duration-200 cursor-pointer focus:outline-none"
+            style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
           >
             <Phone className="w-4 h-4" />
             Test Your Receptionist
           </button>
           <button
             onClick={() => onComplete(answers, 'edit')}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl border border-border text-text-mid font-medium hover:bg-bg hover:border-text-light transition-colors duration-200 cursor-pointer focus:outline-none"
+            className="flex items-center gap-2 px-6 py-3 rounded-[10px] border border-border text-text-mid font-medium hover:bg-bg hover:border-text-light transition-colors duration-200 cursor-pointer focus:outline-none"
           >
             Edit Flow
           </button>
           <button
             onClick={() => onComplete(answers, 'live')}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl text-emerald-600 font-medium hover:bg-emerald-50 transition-colors duration-200 cursor-pointer focus:outline-none"
+            className="flex items-center gap-2 px-6 py-3 rounded-[10px] text-[#34c759] font-medium hover:bg-[#34c759]/8 transition-colors duration-200 cursor-pointer focus:outline-none"
           >
             Go Live
           </button>
@@ -242,7 +243,7 @@ export default function SetupCall({ onComplete, onBack }) {
       <div className="w-[280px] border-r border-border flex flex-col shrink-0 bg-surface">
         {/* Header */}
         <div className="flex items-center justify-center px-4 py-3 border-b border-border">
-          <span className="text-xs text-text-mid font-medium">Setup with Max</span>
+          <span className="text-xs text-text-mid font-medium tracking-wide">Setup with Max</span>
         </div>
 
         {/* Orb */}
@@ -261,7 +262,7 @@ export default function SetupCall({ onComplete, onBack }) {
               <div
                 key={i}
                 className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-                  i + 1 < currentQuestion ? 'bg-emerald-500' :
+                  i + 1 < currentQuestion ? 'bg-[#34c759]' :
                   i + 1 === currentQuestion ? 'bg-primary' :
                   'bg-border'
                 }`}
@@ -274,9 +275,9 @@ export default function SetupCall({ onComplete, onBack }) {
         <div ref={transcriptRef} className="flex-1 overflow-y-auto px-4 py-2 space-y-3">
           {transcript.map((msg, i) => (
             <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[90%] rounded-xl px-3.5 py-2.5 text-[13px] leading-relaxed ${
+              <div className={`max-w-[90%] rounded-[10px] px-3.5 py-2.5 text-[13px] leading-relaxed ${
                 msg.role === 'user'
-                  ? 'bg-primary/10 text-primary-dark'
+                  ? 'bg-[#eaf5ff] text-[#1c70b4]'
                   : 'bg-bg text-text-dark'
               }`}>
                 {msg.text}
@@ -285,7 +286,7 @@ export default function SetupCall({ onComplete, onBack }) {
           ))}
           {interimText && (
             <div className="flex justify-end">
-              <div className="max-w-[90%] rounded-xl px-3.5 py-2.5 text-[13px] leading-relaxed bg-primary/5 text-primary/60 italic">
+              <div className="max-w-[90%] rounded-[10px] px-3.5 py-2.5 text-[13px] leading-relaxed bg-[#eaf5ff]/50 text-primary/60 italic">
                 {interimText}...
               </div>
             </div>
@@ -294,10 +295,10 @@ export default function SetupCall({ onComplete, onBack }) {
 
         {/* Error display */}
         {error && (
-          <div className="mx-3 mb-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200">
-            <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />
-            <span className="text-xs text-red-600 flex-1">{error}</span>
-            <button onClick={clearError} className="text-red-400 hover:text-red-500 cursor-pointer focus:outline-none">
+          <div className="mx-3 mb-2 flex items-center gap-2 px-3 py-2 rounded-[10px] bg-[#f9dedc] border border-[#b3261e]/20">
+            <AlertCircle className="w-3.5 h-3.5 text-[#b3261e] shrink-0" />
+            <span className="text-xs text-[#b3261e] flex-1">{error}</span>
+            <button onClick={clearError} className="text-[#b3261e]/60 hover:text-[#b3261e] cursor-pointer focus:outline-none">
               <X className="w-3 h-3" />
             </button>
           </div>
@@ -313,12 +314,12 @@ export default function SetupCall({ onComplete, onBack }) {
                     listen();
                   }
                 }}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer focus:outline-none ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-[10px] text-sm font-medium transition-all duration-200 cursor-pointer focus:outline-none ${
                   isListening
-                    ? 'bg-red-50 border border-red-300 text-red-600'
+                    ? 'bg-[#f9dedc] border border-[#b3261e]/30 text-[#b3261e]'
                     : orbState === 'speaking' || orbState === 'thinking'
                     ? 'bg-bg border border-border text-text-light cursor-not-allowed'
-                    : 'bg-primary/10 border border-primary/30 text-primary hover:bg-primary/15'
+                    : 'bg-[#eaf5ff] border border-primary/30 text-primary hover:bg-[#bce1fe]/40'
                 }`}
               >
                 {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -326,14 +327,14 @@ export default function SetupCall({ onComplete, onBack }) {
               </button>
               <button
                 onClick={toggleVoice}
-                className="p-2 rounded-lg text-text-light hover:text-text-dark hover:bg-bg transition-colors duration-200 cursor-pointer focus:outline-none"
+                className="p-2 rounded-[10px] text-text-light hover:text-text-dark hover:bg-bg transition-colors duration-200 cursor-pointer focus:outline-none"
                 title={voiceEnabled ? 'Disable voice' : 'Enable voice'}
               >
                 {voiceEnabled ? <Mic className="w-3.5 h-3.5" /> : <MicOff className="w-3.5 h-3.5" />}
               </button>
             </div>
           )}
-          <div className="flex items-center gap-2 bg-bg rounded-xl px-3 py-2 border border-border">
+          <div className="flex items-center gap-2 bg-bg rounded-[10px] px-3 py-2 border border-border">
             <input
               type="text"
               value={textInput}
@@ -344,7 +345,7 @@ export default function SetupCall({ onComplete, onBack }) {
             />
             <button
               onClick={handleTextSubmit}
-              className="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors duration-200 cursor-pointer focus:outline-none"
+              className="p-1.5 rounded-[10px] text-primary hover:bg-[#eaf5ff] transition-colors duration-200 cursor-pointer focus:outline-none"
             >
               <Send className="w-4 h-4" />
             </button>
@@ -356,7 +357,7 @@ export default function SetupCall({ onComplete, onBack }) {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Question header */}
         <div className="px-8 pt-8 pb-4">
-          <span className="text-xs font-semibold text-primary uppercase tracking-wider mb-2 block">Question {currentQuestion}</span>
+          <span className="text-[11px] font-semibold text-primary uppercase tracking-wider mb-2 block">Question {currentQuestion}</span>
           <h2 className="text-lg font-semibold text-text-dark leading-relaxed max-w-2xl">
             {QUESTIONS[currentQuestion - 1].ask}
           </h2>
@@ -392,7 +393,8 @@ function ContinueBtn({ onClick, disabled, label = 'Continue' }) {
     <button
       onClick={onClick}
       disabled={disabled}
-      className="mt-6 flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-dark disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer focus:outline-none shadow-sm"
+      className="mt-6 flex items-center gap-2 px-6 py-2.5 rounded-[10px] bg-primary text-white text-sm font-medium hover:bg-primary-dark disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer focus:outline-none"
+      style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
     >
       {label}
       <ChevronRight className="w-4 h-4" />
@@ -412,11 +414,12 @@ function Q1Industry({ answers, updateAnswer, onNext }) {
             <button
               key={ind.id}
               onClick={() => updateAnswer('industry', ind.id)}
-              className={`flex flex-col items-center gap-3 p-5 rounded-xl border transition-all duration-200 cursor-pointer focus:outline-none ${
+              className={`flex flex-col items-center gap-3 p-5 rounded-[10px] border transition-all duration-200 cursor-pointer focus:outline-none ${
                 isSelected
-                  ? 'bg-primary/10 border-primary/40 text-primary'
+                  ? 'bg-[#eaf5ff] border-primary/40 text-primary'
                   : 'bg-surface border-border text-text-mid hover:bg-bg hover:border-text-light hover:text-text-dark'
               }`}
+              style={{ boxShadow: isSelected ? 'none' : '0 1px 2px rgba(0,0,0,0.05)' }}
             >
               <Icon className="w-7 h-7" />
               <span className="text-[13px] font-medium">{ind.label}</span>
@@ -433,7 +436,7 @@ function Q1Industry({ answers, updateAnswer, onNext }) {
             value={answers.businessName}
             onChange={(e) => updateAnswer('businessName', e.target.value)}
             placeholder="e.g., Riverside Dental"
-            className="w-full bg-surface border border-border rounded-xl px-4 py-2.5 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all duration-200"
+            className="w-full bg-surface border border-border rounded-[10px] px-4 py-2.5 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all duration-200"
           />
         </div>
       )}
@@ -465,40 +468,42 @@ function Q2Schedule({ answers, updateAnswer, onNext }) {
 
   return (
     <div className="max-w-2xl">
-      <div className="space-y-2">
-        {DAYS.map((day) => {
-          const d = answers.schedule[day];
-          return (
-            <div key={day} className="flex items-center gap-4 py-2">
-              <span className="w-24 text-sm text-text-dark font-medium">{day}</span>
-              <button
-                onClick={() => toggleDay(day)}
-                className={`w-16 h-7 rounded-full relative transition-colors duration-200 cursor-pointer focus:outline-none ${
-                  d.open ? 'bg-primary' : 'bg-border'
-                }`}
-              >
-                <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform duration-200 ${
-                  d.open ? 'translate-x-9' : 'translate-x-0.5'
-                }`} />
-              </button>
-              {d.open ? (
-                <div className="flex items-center gap-2">
-                  <select value={d.start} onChange={(e) => updateTime(day, 'start', e.target.value)}
-                    className="bg-surface border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-dark focus:outline-none focus:border-primary/50 cursor-pointer">
-                    {TIMES.map((t) => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                  <span className="text-text-light text-xs">to</span>
-                  <select value={d.end} onChange={(e) => updateTime(day, 'end', e.target.value)}
-                    className="bg-surface border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-dark focus:outline-none focus:border-primary/50 cursor-pointer">
-                    {TIMES.map((t) => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-              ) : (
-                <span className="text-xs text-text-light">Closed</span>
-              )}
-            </div>
-          );
-        })}
+      <div className="bg-surface rounded-[10px] border border-border p-4" style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
+        <div className="space-y-1">
+          {DAYS.map((day) => {
+            const d = answers.schedule[day];
+            return (
+              <div key={day} className="flex items-center gap-4 py-2.5 px-2 rounded-lg hover:bg-bg transition-colors duration-150">
+                <span className="w-24 text-sm text-text-dark font-medium">{day}</span>
+                <button
+                  onClick={() => toggleDay(day)}
+                  className={`w-12 h-7 rounded-full relative transition-colors duration-200 cursor-pointer focus:outline-none ${
+                    d.open ? 'bg-primary' : 'bg-[#d0d3da]'
+                  }`}
+                >
+                  <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform duration-200 ${
+                    d.open ? 'translate-x-5' : 'translate-x-0.5'
+                  }`} />
+                </button>
+                {d.open ? (
+                  <div className="flex items-center gap-2">
+                    <select value={d.start} onChange={(e) => updateTime(day, 'start', e.target.value)}
+                      className="bg-bg border border-border rounded-[10px] px-2.5 py-1.5 text-xs text-text-dark focus:outline-none focus:border-primary/50 cursor-pointer">
+                      {TIMES.map((t) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                    <span className="text-text-light text-xs">to</span>
+                    <select value={d.end} onChange={(e) => updateTime(day, 'end', e.target.value)}
+                      className="bg-bg border border-border rounded-[10px] px-2.5 py-1.5 text-xs text-text-dark focus:outline-none focus:border-primary/50 cursor-pointer">
+                      {TIMES.map((t) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </div>
+                ) : (
+                  <span className="text-xs text-text-light">Closed</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <ContinueBtn
@@ -541,9 +546,9 @@ function Q3Intents({ answers, updateAnswer, onNext }) {
             <button
               key={chip}
               onClick={() => toggleIntent(chip)}
-              className={`px-4 py-2.5 rounded-xl text-[13px] font-medium border transition-all duration-200 cursor-pointer focus:outline-none ${
+              className={`px-4 py-2.5 rounded-full text-[13px] font-medium border transition-all duration-200 cursor-pointer focus:outline-none ${
                 sel
-                  ? 'bg-primary/10 border-primary/40 text-primary'
+                  ? 'bg-primary text-white border-primary'
                   : 'bg-surface border-border text-text-mid hover:bg-bg hover:border-text-light'
               }`}
             >
@@ -561,9 +566,9 @@ function Q3Intents({ answers, updateAnswer, onNext }) {
           onChange={(e) => setCustomIntent(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && addCustom()}
           placeholder="Add your own..."
-          className="flex-1 bg-surface border border-border rounded-xl px-4 py-2.5 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50 transition-all duration-200"
+          className="flex-1 bg-surface border border-border rounded-[10px] px-4 py-2.5 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50 transition-all duration-200"
         />
-        <button onClick={addCustom} className="p-2.5 rounded-xl bg-surface border border-border text-text-mid hover:text-primary hover:border-primary/30 transition-colors duration-200 cursor-pointer focus:outline-none">
+        <button onClick={addCustom} className="p-2.5 rounded-[10px] bg-surface border border-border text-text-mid hover:text-primary hover:border-primary/30 transition-colors duration-200 cursor-pointer focus:outline-none">
           <Plus className="w-4 h-4" />
         </button>
       </div>
@@ -601,13 +606,14 @@ function Q4Calendar({ answers, updateAnswer, onNext }) {
             <button
               key={cal.id}
               onClick={() => updateAnswer('calendar', cal.id)}
-              className={`flex items-center gap-3 p-4 rounded-xl border transition-all duration-200 cursor-pointer focus:outline-none ${
+              className={`flex items-center gap-3 p-4 rounded-[10px] border transition-all duration-200 cursor-pointer focus:outline-none ${
                 sel
-                  ? 'bg-primary/10 border-primary/40'
+                  ? 'bg-[#eaf5ff] border-primary/40'
                   : 'bg-surface border-border hover:bg-bg hover:border-text-light'
               }`}
+              style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
             >
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: cal.color + '20' }}>
+              <div className="w-8 h-8 rounded-[10px] flex items-center justify-center" style={{ backgroundColor: cal.color + '20' }}>
                 <CalIcon className="w-4 h-4" style={{ color: cal.color }} />
               </div>
               <span className={`text-[13px] font-medium ${sel ? 'text-primary' : 'text-text-dark'}`}>{cal.label}</span>
@@ -618,9 +624,9 @@ function Q4Calendar({ answers, updateAnswer, onNext }) {
       </div>
 
       {answers.calendar && answers.calendar !== 'manual' && (
-        <div className="mb-6 flex items-center gap-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200">
-          <Check className="w-4 h-4 text-emerald-600" />
-          <span className="text-sm text-emerald-700">Connected (simulated)</span>
+        <div className="mb-6 flex items-center gap-3 p-3 rounded-[10px] bg-[#34c759]/8 border border-[#34c759]/20">
+          <Check className="w-4 h-4 text-[#34c759]" />
+          <span className="text-sm text-[#34c759]">Connected (simulated)</span>
         </div>
       )}
 
@@ -634,17 +640,17 @@ function Q4Calendar({ answers, updateAnswer, onNext }) {
                 value={apt.name}
                 onChange={(e) => updateApptType(i, 'name', e.target.value)}
                 placeholder="e.g., Cleaning"
-                className="flex-1 bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50 transition-all duration-200"
+                className="flex-1 bg-surface border border-border rounded-[10px] px-3 py-2 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50 transition-all duration-200"
               />
               <select
                 value={apt.duration}
                 onChange={(e) => updateApptType(i, 'duration', Number(e.target.value))}
-                className="bg-surface border border-border rounded-lg px-2.5 py-2 text-sm text-text-dark focus:outline-none focus:border-primary/50 cursor-pointer"
+                className="bg-surface border border-border rounded-[10px] px-2.5 py-2 text-sm text-text-dark focus:outline-none focus:border-primary/50 cursor-pointer"
               >
                 {[15, 30, 45, 60, 90].map((d) => <option key={d} value={d}>{d} min</option>)}
               </select>
               {answers.appointmentTypes.length > 1 && (
-                <button onClick={() => removeApptType(i)} className="p-1.5 text-text-light hover:text-red-500 cursor-pointer focus:outline-none">
+                <button onClick={() => removeApptType(i)} className="p-1.5 text-text-light hover:text-[#b3261e] cursor-pointer focus:outline-none">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -681,15 +687,16 @@ function Q5AfterHours({ answers, updateAnswer, onNext }) {
             <button
               key={opt.id}
               onClick={() => updateAnswer('afterHoursMode', opt.id)}
-              className={`w-full text-left p-5 rounded-xl border transition-all duration-200 cursor-pointer focus:outline-none ${
+              className={`w-full text-left p-5 rounded-[10px] border transition-all duration-200 cursor-pointer focus:outline-none ${
                 sel
-                  ? 'bg-primary/10 border-primary/40'
+                  ? 'bg-[#eaf5ff] border-primary/40'
                   : 'bg-surface border-border hover:bg-bg hover:border-text-light'
               }`}
+              style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
             >
               <div className="flex items-center gap-3">
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                  sel ? 'border-primary' : 'border-border'
+                  sel ? 'border-primary' : 'border-[#d0d3da]'
                 }`}>
                   {sel && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                 </div>
@@ -703,7 +710,7 @@ function Q5AfterHours({ answers, updateAnswer, onNext }) {
         })}
       </div>
 
-      <div className="mt-5 flex items-center justify-between p-4 rounded-xl bg-surface border border-border">
+      <div className="mt-5 flex items-center justify-between p-4 rounded-[10px] bg-surface border border-border" style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
         <div>
           <span className="text-sm text-text-dark font-medium">Emergency override?</span>
           <p className="text-xs text-text-mid">Urgent calls bypass after-hours routing</p>
@@ -711,7 +718,7 @@ function Q5AfterHours({ answers, updateAnswer, onNext }) {
         <button
           onClick={() => updateAnswer('emergencyOverride', !answers.emergencyOverride)}
           className={`w-12 h-7 rounded-full relative transition-colors duration-200 cursor-pointer focus:outline-none ${
-            answers.emergencyOverride ? 'bg-primary' : 'bg-border'
+            answers.emergencyOverride ? 'bg-primary' : 'bg-[#d0d3da]'
           }`}
         >
           <div className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform duration-200 ${
@@ -748,11 +755,11 @@ function Q6Transfers({ answers, updateAnswer, onNext }) {
     <div className="max-w-2xl">
       <div className="space-y-3">
         {answers.transferRules.map((rule, i) => (
-          <div key={i} className="p-4 rounded-xl bg-surface border border-border">
+          <div key={i} className="p-4 rounded-[10px] bg-surface border border-border" style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}>
             <div className="flex items-center gap-2 mb-3">
               <span className="text-xs text-text-mid font-medium">Rule {i + 1}</span>
               {answers.transferRules.length > 1 && (
-                <button onClick={() => removeRule(i)} className="ml-auto p-1 text-text-light hover:text-red-500 cursor-pointer focus:outline-none">
+                <button onClick={() => removeRule(i)} className="ml-auto p-1 text-text-light hover:text-[#b3261e] cursor-pointer focus:outline-none">
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -764,7 +771,7 @@ function Q6Transfers({ answers, updateAnswer, onNext }) {
                   value={rule.condition}
                   onChange={(e) => updateRule(i, 'condition', e.target.value)}
                   placeholder="e.g., emergency"
-                  className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50"
+                  className="w-full bg-bg border border-border rounded-[10px] px-3 py-2 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50"
                 />
               </div>
               <div>
@@ -773,7 +780,7 @@ function Q6Transfers({ answers, updateAnswer, onNext }) {
                   value={rule.destination}
                   onChange={(e) => updateRule(i, 'destination', e.target.value)}
                   placeholder="555-0123"
-                  className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50"
+                  className="w-full bg-bg border border-border rounded-[10px] px-3 py-2 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50"
                 />
               </div>
               <div>
@@ -782,7 +789,7 @@ function Q6Transfers({ answers, updateAnswer, onNext }) {
                   value={rule.label}
                   onChange={(e) => updateRule(i, 'label', e.target.value)}
                   placeholder="Dr. Patel — Cell"
-                  className="w-full bg-bg border border-border rounded-lg px-3 py-2 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50"
+                  className="w-full bg-bg border border-border rounded-[10px] px-3 py-2 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50"
                 />
               </div>
             </div>
@@ -831,12 +838,12 @@ function Q7Knowledge({ answers, updateAnswer, onNext }) {
             value={answers.knowledgeUrl}
             onChange={(e) => { updateAnswer('knowledgeUrl', e.target.value); setDone(false); }}
             placeholder="https://your-website.com"
-            className="flex-1 bg-surface border border-border rounded-xl px-4 py-2.5 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50 transition-all duration-200"
+            className="flex-1 bg-surface border border-border rounded-[10px] px-4 py-2.5 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50 transition-all duration-200"
           />
           <button
             onClick={simulateCrawl}
             disabled={!answers.knowledgeUrl || processing}
-            className="px-4 py-2.5 rounded-xl bg-primary/10 border border-primary/30 text-primary text-sm font-medium hover:bg-primary/15 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer focus:outline-none"
+            className="px-4 py-2.5 rounded-[10px] bg-[#eaf5ff] border border-primary/30 text-primary text-sm font-medium hover:bg-[#bce1fe]/40 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 cursor-pointer focus:outline-none"
           >
             {processing ? 'Crawling...' : 'Scan'}
           </button>
@@ -847,7 +854,7 @@ function Q7Knowledge({ answers, updateAnswer, onNext }) {
           </div>
         )}
         {done && (
-          <div className="mt-2 flex items-center gap-2 text-emerald-600 text-xs">
+          <div className="mt-2 flex items-center gap-2 text-[#34c759] text-xs">
             <Check className="w-3.5 h-3.5" />
             Found 12 questions from your website
           </div>
@@ -859,7 +866,7 @@ function Q7Knowledge({ answers, updateAnswer, onNext }) {
         <label className="text-xs text-text-mid font-medium mb-2 flex items-center gap-2">
           <Upload className="w-3.5 h-3.5" /> Upload Files
         </label>
-        <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-text-light transition-colors duration-200 cursor-pointer">
+        <div className="border-2 border-dashed border-border rounded-[10px] p-8 text-center hover:border-text-light transition-colors duration-200 cursor-pointer">
           <FileText className="w-8 h-8 text-text-light mx-auto mb-2" />
           <p className="text-sm text-text-mid">Drop PDFs, Word docs, or text files here</p>
           <p className="text-xs text-text-light mt-1">or click to browse</p>
@@ -874,7 +881,7 @@ function Q7Knowledge({ answers, updateAnswer, onNext }) {
         <textarea
           rows={3}
           placeholder="Q: Do you accept insurance?&#10;A: Yes, we accept most major dental insurance plans..."
-          className="w-full bg-surface border border-border rounded-xl px-4 py-3 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50 transition-all duration-200 resize-none"
+          className="w-full bg-surface border border-border rounded-[10px] px-4 py-3 text-sm text-text-dark placeholder:text-text-light focus:outline-none focus:border-primary/50 transition-all duration-200 resize-none"
         />
       </div>
 

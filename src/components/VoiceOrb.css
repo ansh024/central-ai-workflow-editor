@@ -18,8 +18,8 @@
   transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   filter: drop-shadow(0 0 4px rgba(255, 255, 255))
     drop-shadow(0 0 12px rgba(255, 255, 255))
-    drop-shadow(0 0 12px rgba(145, 71, 255, 0.3))
-    drop-shadow(0 0 5px rgba(255, 0, 0, 0.3));
+    drop-shadow(0 0 12px rgba(40, 158, 253, 0.3))
+    drop-shadow(0 0 5px rgba(40, 158, 253, 0.2));
 }
 
 .voice-orb.large {
@@ -42,7 +42,7 @@
   height: 100%;
   flex-shrink: 0;
   border-radius: 50px;
-  background-color: #ff0002;
+  background-color: #289efd;
   filter: url(#gooey);
 }
 
@@ -56,8 +56,8 @@
   height: 150%;
   background-image: radial-gradient(
     ellipse at center,
-    rgba(255, 255, 255, 0.75) 15%,
-    #3b82f6 50%
+    rgba(255, 255, 255, 0.8) 15%,
+    #289efd 50%
   );
   clip-path: polygon(
     50% 25%, 65% 30%, 75% 42%, 75% 58%, 65% 70%,
@@ -86,7 +86,7 @@
   mask:
     linear-gradient(#fff 0 0) padding-box,
     linear-gradient(#fff 0 0);
-  background: linear-gradient(white, blue, magenta, violet, lightyellow) border-box;
+  background: linear-gradient(white, #289efd, #6fbefe, #53b1fd, #eaf5ff) border-box;
   mask-composite: exclude;
   -webkit-mask-composite: xor;
 }
@@ -140,9 +140,9 @@
 
 /* ── State: Listening ── */
 .voice-orb.state-listening {
-  filter: drop-shadow(0 0 12px rgba(145, 71, 255, 0.5))
-    drop-shadow(0 0 8px rgba(255, 0, 0, 0.4))
-    drop-shadow(0 0 20px rgba(59, 130, 246, 0.3));
+  filter: drop-shadow(0 0 12px rgba(40, 158, 253, 0.5))
+    drop-shadow(0 0 8px rgba(111, 190, 254, 0.4))
+    drop-shadow(0 0 20px rgba(40, 158, 253, 0.3));
 }
 
 .voice-orb.state-listening .ball {
@@ -161,8 +161,8 @@
 /* ── State: Speaking ── */
 .voice-orb.state-speaking {
   filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.6))
-    drop-shadow(0 0 16px rgba(59, 130, 246, 0.4))
-    drop-shadow(0 0 24px rgba(145, 71, 255, 0.3));
+    drop-shadow(0 0 16px rgba(40, 158, 253, 0.4))
+    drop-shadow(0 0 24px rgba(111, 190, 254, 0.3));
 }
 
 .voice-orb.state-speaking .ball {
@@ -181,7 +181,7 @@
 /* ── State: Thinking ── */
 .voice-orb.state-thinking {
   filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.3))
-    drop-shadow(0 0 10px rgba(145, 71, 255, 0.4));
+    drop-shadow(0 0 10px rgba(40, 158, 253, 0.4));
 }
 
 .voice-orb.state-thinking .ball {

@@ -47,11 +47,15 @@ export default function useVoiceChat({ onComplete }) {
   const audioPlayer = useAudioPlayer();
   const processingRef = useRef(false);
   const stageRef = useRef(stage);
+  const currentQuestionRef = useRef(currentQuestion);
+  const transcriptRef = useRef(transcript);
+  const answersRef = useRef(answers);
 
-  // Keep stageRef in sync
-  useEffect(() => {
-    stageRef.current = stage;
-  }, [stage]);
+  // Keep refs in sync with state
+  useEffect(() => { stageRef.current = stage; }, [stage]);
+  useEffect(() => { currentQuestionRef.current = currentQuestion; }, [currentQuestion]);
+  useEffect(() => { transcriptRef.current = transcript; }, [transcript]);
+  useEffect(() => { answersRef.current = answers; }, [answers]);
 
   // Watch interim transcript from voice input
   useEffect(() => {
@@ -81,16 +85,20 @@ export default function useVoiceChat({ onComplete }) {
     }
   }, [audioPlayer]);
 
+  // Ref to always call the latest handleUserInput (avoids circular dep + stale closure)
+  const handleUserInputRef = useRef(null);
+
   // Start listening for voice input
   const listen = useCallback(() => {
     if (!voiceInput.isSupported || !voiceEnabled) return;
     setOrbState('listening');
     voiceInput.startListening((finalText) => {
-      handleUserInput(finalText);
+      handleUserInputRef.current?.(finalText);
     });
   }, [voiceInput.isSupported, voiceEnabled]);
 
   // Process user input (from voice or text)
+  // Uses refs to always read the latest state — avoids stale closure bugs
   const handleUserInput = useCallback(async (text) => {
     if (processingRef.current || !text.trim()) return;
     processingRef.current = true;
@@ -98,6 +106,11 @@ export default function useVoiceChat({ onComplete }) {
     // Stop listening if still active
     voiceInput.stopListening();
     setInterimText('');
+
+    // Read latest values from refs (not stale closure)
+    const qNum = currentQuestionRef.current;
+    const history = transcriptRef.current;
+    const ans = answersRef.current;
 
     // Add user message to transcript
     addMessage('user', text.trim());
@@ -110,9 +123,9 @@ export default function useVoiceChat({ onComplete }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           transcript: text.trim(),
-          currentQuestion,
-          conversationHistory: transcript,
-          currentAnswers: answers,
+          currentQuestion: qNum,
+          conversationHistory: history,
+          currentAnswers: ans,
         }),
       });
 
@@ -139,9 +152,9 @@ export default function useVoiceChat({ onComplete }) {
       addMessage('max', result.acknowledgment);
 
       // Speak acknowledgment
-      if (result.readyToAdvance && currentQuestion < 7) {
+      if (result.readyToAdvance && qNum < 7) {
         // Speak ack + next question together
-        const nextQ = QUESTIONS[currentQuestion]; // 0-indexed is next since currentQuestion is 1-indexed
+        const nextQ = QUESTIONS[qNum]; // 0-indexed is next since qNum is 1-indexed
         const combinedText = result.acknowledgment + ' ' + nextQ.ask;
         addMessage('max', nextQ.ask);
 
@@ -155,7 +168,7 @@ export default function useVoiceChat({ onComplete }) {
           listen();
         }
         return;
-      } else if (result.readyToAdvance && currentQuestion === 7) {
+      } else if (result.readyToAdvance && qNum === 7) {
         // All done — reveal stage
         const revealText = "All set! Here's your receptionist flow. Let me walk you through what I built.";
         addMessage('max', revealText);
@@ -179,7 +192,10 @@ export default function useVoiceChat({ onComplete }) {
       setOrbState('idle');
       processingRef.current = false;
     }
-  }, [currentQuestion, transcript, answers, addMessage, speak, listen, voiceInput, voiceEnabled]);
+  }, [addMessage, speak, listen, voiceInput, voiceEnabled]);
+
+  // Keep handleUserInput ref in sync so listen() always calls the latest version
+  handleUserInputRef.current = handleUserInput;
 
   // Text input fallback
   const sendText = useCallback((text) => {
@@ -225,13 +241,15 @@ export default function useVoiceChat({ onComplete }) {
 
   // Advance from UI click (right panel Continue) — skip AI interpret
   const advanceFromUI = useCallback(async (summary) => {
+    const qNum = currentQuestionRef.current;
+
     // Add user message summarizing their selection
     addMessage('user', summary);
     // Add simple acknowledgment
     addMessage('max', 'Got it!');
 
-    if (currentQuestion < 7) {
-      const nextQ = QUESTIONS[currentQuestion]; // 0-indexed next
+    if (qNum < 7) {
+      const nextQ = QUESTIONS[qNum]; // 0-indexed next
       setCurrentQuestion(prev => prev + 1);
       addMessage('max', nextQ.ask);
       await speak('Got it! ' + nextQ.ask);
@@ -246,7 +264,7 @@ export default function useVoiceChat({ onComplete }) {
       setOrbState('speaking');
       setStage('reveal');
     }
-  }, [currentQuestion, addMessage, speak, listen, voiceInput.isSupported, voiceEnabled]);
+  }, [addMessage, speak, listen, voiceInput.isSupported, voiceEnabled]);
 
   // Toggle voice on/off
   const toggleVoice = useCallback(() => {
