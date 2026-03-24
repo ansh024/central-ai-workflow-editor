@@ -1,7 +1,21 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { BUSINESS_TYPES, getTemplatesByType } from '../data/templates';
-import { Search, Plus, Clock, ArrowLeft, Workflow, Sparkles, Check, X, LayoutTemplate, Pencil } from 'lucide-react';
+import { Search, Plus, Clock, ArrowLeft, Workflow, Sparkles, Check, X, LayoutTemplate, Pencil, ChevronsUpDown, ChevronUp, ChevronDown } from 'lucide-react';
 import * as Icons from 'lucide-react';
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  flexRender,
+} from '@tanstack/react-table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 /* ───────────────────────────── New Workflow Sidebar ───────────────────────────── */
 
@@ -241,69 +255,154 @@ function getMockDate(id) {
   return MOCK_DATES[id] || 'Mar 15, 2026';
 }
 
+/* ───────────────────────────── Status Badge ───────────────────────────── */
+
+function StatusBadge({ status }) {
+  const cfg = {
+    Published: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    Modified:  'bg-amber-50 text-amber-700 border-amber-200',
+    Draft:     'bg-slate-100 text-text-mid border-slate-200',
+  };
+  const label = status || 'Draft';
+  return (
+    <span className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-1 rounded-full border ${cfg[label] ?? cfg.Draft}`}>
+      {label}
+    </span>
+  );
+}
+
+/* ───────────────────────────── Sort Header Button ───────────────────────────── */
+
+function SortButton({ column, children }) {
+  const sorted = column.getIsSorted();
+  return (
+    <button
+      onClick={column.getToggleSortingHandler()}
+      className="flex items-center gap-1 group/sort cursor-pointer focus:outline-none"
+    >
+      {children}
+      <span className="text-text-light/60 group-hover/sort:text-text-light transition-colors">
+        {sorted === 'asc'  ? <ChevronUp className="w-3.5 h-3.5" /> :
+         sorted === 'desc' ? <ChevronDown className="w-3.5 h-3.5" /> :
+                             <ChevronsUpDown className="w-3.5 h-3.5" />}
+      </span>
+    </button>
+  );
+}
+
 /* ───────────────────────────── Workflows Table ───────────────────────────── */
 
 function WorkflowsTable({ savedFlows, onSelectFlow }) {
+  const [sorting, setSorting] = useState([]);
+
+  const data = useMemo(
+    () => savedFlows.map((f) => ({ ...f, lastModified: getMockDate(f.id) })),
+    [savedFlows]
+  );
+
+  const columns = useMemo(() => [
+    {
+      accessorKey: 'name',
+      header: ({ column }) => <SortButton column={column}>Name</SortButton>,
+      cell: ({ row }) => (
+        <span className="text-[14px] font-medium text-text-dark group-hover:text-primary transition-colors duration-200">
+          {row.getValue('name')}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'status',
+      header: ({ column }) => <SortButton column={column}>Status</SortButton>,
+      cell: ({ row }) => <StatusBadge status={row.getValue('status')} />,
+    },
+    {
+      accessorKey: 'nodeCount',
+      header: ({ column }) => <SortButton column={column}>Nodes</SortButton>,
+      cell: ({ row }) => (
+        <span className="text-[13px] text-text-mid flex items-center gap-1.5">
+          <Workflow className="w-3.5 h-3.5 text-text-light shrink-0" />
+          {row.getValue('nodeCount') ?? 0}
+        </span>
+      ),
+    },
+    {
+      accessorKey: 'lastModified',
+      header: ({ column }) => <SortButton column={column}>Last Modified</SortButton>,
+      cell: ({ row }) => (
+        <span className="text-[13px] text-text-mid">{row.getValue('lastModified')}</span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: () => <span className="sr-only">Actions</span>,
+      cell: ({ row }) => (
+        <div className="flex justify-end">
+          <button
+            onClick={() => onSelectFlow(row.original)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-text-mid border border-border hover:border-primary/30 hover:text-primary hover:bg-primary/5 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
+          >
+            <Pencil className="w-3.5 h-3.5" />
+            Edit
+          </button>
+        </div>
+      ),
+      enableSorting: false,
+    },
+  ], [onSelectFlow]);
+
+  const table = useReactTable({
+    data,
+    columns,
+    state: { sorting },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
+
   if (savedFlows.length === 0) return null;
 
   return (
     <div className="bg-surface border border-border rounded-[10px] overflow-hidden">
-      <table className="w-full text-left">
-        <thead>
-          <tr className="bg-slate-50/80 border-b border-border">
-            <th className="px-5 py-3 text-[11px] font-semibold text-text-light uppercase tracking-wider">Name</th>
-            <th className="px-5 py-3 text-[11px] font-semibold text-text-light uppercase tracking-wider">Status</th>
-            <th className="px-5 py-3 text-[11px] font-semibold text-text-light uppercase tracking-wider hidden sm:table-cell">Nodes</th>
-            <th className="px-5 py-3 text-[11px] font-semibold text-text-light uppercase tracking-wider hidden md:table-cell">Last Modified</th>
-            <th className="px-5 py-3 text-[11px] font-semibold text-text-light uppercase tracking-wider text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {savedFlows.map((flow) => (
-            <tr
-              key={flow.id}
-              className="hover:bg-slate-50/60 transition-colors duration-150 group"
-            >
-              <td className="px-5 py-4">
-                <span className="text-[14px] font-medium text-text-dark group-hover:text-primary transition-colors duration-200">
-                  {flow.name}
-                </span>
-              </td>
-              <td className="px-5 py-4">
-                <span
-                  className={`inline-flex items-center text-[11px] font-semibold px-2.5 py-1 rounded-full ${
-                    flow.status === 'Published'
-                      ? 'bg-emerald-50 text-emerald-700'
-                      : flow.status === 'Modified'
-                      ? 'bg-amber-50 text-amber-700'
-                      : 'bg-slate-100 text-text-mid'
-                  }`}
+      <Table>
+        <TableHeader className="bg-slate-50/80">
+          {table.getHeaderGroups().map((hg) => (
+            <TableRow key={hg.id} className="border-border hover:bg-transparent">
+              {hg.headers.map((header) => (
+                <TableHead
+                  key={header.id}
+                  className={`px-5 py-3 text-[11px] font-semibold text-text-light uppercase tracking-wider h-auto
+                    ${header.column.id === 'nodeCount' ? 'hidden sm:table-cell' : ''}
+                    ${header.column.id === 'lastModified' ? 'hidden md:table-cell' : ''}
+                    ${header.column.id === 'actions' ? 'text-right' : ''}
+                  `}
                 >
-                  {flow.status || 'Draft'}
-                </span>
-              </td>
-              <td className="px-5 py-4 hidden sm:table-cell">
-                <span className="text-[13px] text-text-mid flex items-center gap-1.5">
-                  <Workflow className="w-3.5 h-3.5 text-text-light" />
-                  {flow.nodeCount || 0}
-                </span>
-              </td>
-              <td className="px-5 py-4 hidden md:table-cell">
-                <span className="text-[13px] text-text-mid">{getMockDate(flow.id)}</span>
-              </td>
-              <td className="px-5 py-4 text-right">
-                <button
-                  onClick={() => onSelectFlow(flow)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-text-mid border border-border hover:border-primary/30 hover:text-primary hover:bg-primary/5 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30"
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                  Edit
-                </button>
-              </td>
-            </tr>
+                  {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                </TableHead>
+              ))}
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows.map((row) => (
+            <TableRow
+              key={row.id}
+              className="border-border hover:bg-slate-50/60 transition-colors duration-150 group"
+            >
+              {row.getVisibleCells().map((cell) => (
+                <TableCell
+                  key={cell.id}
+                  className={`px-5 py-4
+                    ${cell.column.id === 'nodeCount' ? 'hidden sm:table-cell' : ''}
+                    ${cell.column.id === 'lastModified' ? 'hidden md:table-cell' : ''}
+                  `}
+                >
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </TableCell>
+              ))}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }
