@@ -403,20 +403,20 @@ function WorkflowsTable({ savedFlows, onSelectFlow }) {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => onSelectFlow(row.original)}>
+              <DropdownMenuItem onClick={() => onSelectFlow(row.original)}>
                 <Pencil className="w-3.5 h-3.5" />
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => onSelectFlow(row.original)}>
+              <DropdownMenuItem onClick={() => onSelectFlow(row.original)}>
                 <Copy className="w-3.5 h-3.5" />
                 Duplicate
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => {}}>
+              <DropdownMenuItem onClick={() => {}}>
                 <Download className="w-3.5 h-3.5" />
                 Export JSON
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive" onSelect={() => setDeleteTarget(row.original)}>
+              <DropdownMenuItem variant="destructive" onClick={() => setDeleteTarget(row.original)}>
                 <Trash2 className="w-3.5 h-3.5" />
                 Delete
               </DropdownMenuItem>

@@ -376,7 +376,7 @@ export default function FlowEditor({ initialFlow, flowName: initName, onBack, on
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => setShowVersionHistory(true)}>
+              <DropdownMenuItem onClick={() => setShowVersionHistory(true)}>
                 <History className="w-4 h-4 text-text-light" />
                 Version History
               </DropdownMenuItem>
@@ -385,7 +385,7 @@ export default function FlowEditor({ initialFlow, flowName: initName, onBack, on
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 variant="destructive"
-                onSelect={() => setShowDeleteConfirm(true)}
+                onClick={() => setShowDeleteConfirm(true)}
               >
                 Delete
               </DropdownMenuItem>
