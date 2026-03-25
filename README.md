@@ -1,6 +1,6 @@
 # Central AI — Intelligent Voice Receptionist Platform
 
-Central AI is a full-stack web application that lets businesses build, customize, and simulate AI-powered phone receptionist workflows through a visual drag-and-drop editor. The platform features a conversational AI setup wizard (Max), a node-based flow builder, a live call simulator, version history, and a rich template gallery — all with voice synthesis powered by ElevenLabs.
+Central AI is a full-stack web application that lets businesses build, customize, and simulate AI-powered phone receptionist workflows through a visual node-based editor. The platform features a conversational AI setup wizard (Max), a React Flow graph editor with custom animated edges, a unified right-side panel for node library and configuration, a live call simulator, version history, and a rich template gallery — all with voice synthesis powered by ElevenLabs.
 
 ---
 
@@ -19,8 +19,10 @@ Central AI is a full-stack web application that lets businesses build, customize
   - [TemplateGallery & WorkflowsTable](#templategallery--workflowstable)
   - [FlowEditor](#floweditor)
   - [FlowCanvas](#flowcanvas)
+  - [RightPanel](#rightpanel)
   - [NodeLibrary](#nodelibrary)
   - [NodeConfigPanel](#nodeconfigpanel)
+  - [RunsView](#runsview)
   - [SetupCall (Max AI Wizard)](#setupcall-max-ai-wizard)
   - [Onboarding](#onboarding)
   - [CallSimulator](#callsimulator)
@@ -41,7 +43,7 @@ Central AI enables small businesses (dental offices, law firms, salons, real est
 
 1. **Use a template** — pick from 25 pre-built workflow templates organized by business type
 2. **Let Max build it** — answer 7 voice-guided questions and the app auto-generates a complete call flow
-3. **Build from scratch** — drag-and-drop nodes onto the canvas to construct a custom flow
+3. **Build from scratch** — add nodes via a visual flow graph editor
 
 Completed flows can be tested immediately in the built-in call simulator before going live.
 
@@ -50,20 +52,29 @@ Completed flows can be tested immediately in the built-in call simulator before 
 ## Features
 
 ### Core
-- 🎨 **Visual Flow Builder** — Drag-and-drop node-based editor with an infinite canvas
-- 🤖 **Max AI Wizard** — Voice-guided setup assistant that builds your flow from 7 questions
-- 📋 **25 Templates** — Pre-built flows across 6 business verticals
-- 🧪 **Call Simulator** — Simulates a live call through your flow with AI responses
-- 📜 **Version History** — Every publish creates a snapshot; restore any previous version
-- ↩️ **Undo / Redo** — Full undo/redo stack (up to 20 steps) in the flow editor
+- **Visual Flow Builder** — Node-based graph editor powered by `@xyflow/react` (React Flow v12) with an infinite canvas
+- **Max AI Wizard** — Voice-guided setup assistant that builds your flow from 7 questions
+- **25 Templates** — Pre-built flows across 6 business verticals
+- **Call Simulator** — Simulates a live call through your flow with AI responses
+- **Version History** — Every publish creates a snapshot; restore any previous version
+- **Undo / Redo** — Full undo/redo stack (up to 20 steps) in the flow editor
+- **Runs Tab** — View historical call run logs and analytics
 
 ### Flow Editor
-- 🔍 **Node Finder (Cmd+F)** — Floating search bar that highlights/dims nodes by name
-- 🏷️ **Status Badges** — Draft / Modified / Published states with visual indicators
-- 🗂️ **Node Library** — Collapsible sidebar with category filter pills (Core / Logic / Integration / AI)
-- ⚙️ **Node Config Panel** — Full-featured right panel for editing each node's properties
-- 📤 **Export** — Export flow as JSON
-- 🔁 **Duplicate** — Clone the current workflow
+- **React Flow Canvas** — Custom `WorkflowNode` components with Attio-style card design (gray shell, white inner, colored trigger/category tags)
+- **Animated Edges** — Custom `AnimatedSVGEdge` with SVG gradient overlays and smooth-step paths
+- **Unified Right Panel** — Single panel with three modes: idle, library (node picker), config (node settings)
+- **Plus Button Flow** — Click the `+` button below any node to open the library and insert a node after it
+- **Node Finder (Cmd+F)** — Floating search bar that highlights/dims nodes by name
+- **Status Badges** — Draft / Modified / Published states with visual indicators
+- **Export** — Export flow as JSON
+- **Duplicate** — Clone the current workflow
+
+### Unified Right Panel (Library + Config)
+- **Library mode** — Opens when user clicks `+` on a node; shows node library with search and categorized list; inserts node after the clicked node
+- **Config mode** — Opens when user clicks an existing node; shows full config fields for that node type
+- **Idle mode** — Panel is hidden; canvas fills the full width
+- **Back arrow** — In library or config mode, a back arrow closes the panel and returns to idle
 
 ### Search & Filter
 - Node Library: text search + category filter pills with node counts
@@ -72,10 +83,10 @@ Completed flows can be tested immediately in the built-in call simulator before 
 - Version History: date-range filter (All Time / Last 7 Days / Last 30 Days / Last 90 Days)
 
 ### Voice & AI
-- 🗣️ **ElevenLabs TTS** — Max speaks every prompt through a cloned voice
-- 🎤 **Speech-to-Text** — Web Speech API captures user answers during setup
-- 🧠 **Claude AI** — Interprets natural language answers and extracts structured data
-- 🎵 **Transition Sound** — Subtle audio cue plays when Max finishes setup
+- **ElevenLabs TTS** — Max speaks every prompt through a cloned voice
+- **Speech-to-Text** — Web Speech API captures user answers during setup
+- **Claude AI** — Interprets natural language answers and extracts structured data
+- **Transition Sound** — Subtle audio cue plays when Max finishes setup
 
 ---
 
@@ -87,11 +98,13 @@ Completed flows can be tested immediately in the built-in call simulator before 
 | React | 19.2 | UI framework |
 | Vite | 8.0 | Build tool & dev server |
 | Tailwind CSS | 4.2 | Utility-first styling |
+| `@xyflow/react` | 12.10 | React Flow v12 — graph-based flow canvas |
 | `@base-ui/react` | 1.3 | Accessible UI primitives (shadcn foundation) |
 | `@tanstack/react-table` | 8.21 | Sortable/filterable data tables |
 | Lucide React | 1.6 | Icon library |
 | `class-variance-authority` | 0.7 | Component variant management |
 | `clsx` + `tailwind-merge` | latest | Conditional class merging |
+| `tw-animate-css` | latest | Tailwind animation utilities |
 | Geist Variable Font | 5.2 | Primary typeface |
 
 ### Backend
@@ -121,10 +134,14 @@ Completed flows can be tested immediately in the built-in call simulator before 
 │  ├── AppShell (nav, chat input, notifications)          │
 │  ├── TemplateGallery (browse templates, workflows table)│
 │  ├── FlowEditor                                          │
-│  │   ├── NodeLibrary (drag-to-add nodes)                │
-│  │   ├── FlowCanvas (infinite canvas, tree renderer)    │
-│  │   ├── NodeConfigPanel (property editor)              │
+│  │   ├── FlowCanvas (@xyflow/react graph editor)        │
+│  │   │   ├── WorkflowNode (custom node component)       │
+│  │   │   └── AnimatedSVGEdge (custom edge with gradient)│
+│  │   ├── RightPanel (unified library + config panel)    │
+│  │   │   ├── NodeLibrary (embedded in library mode)     │
+│  │   │   └── NodeConfigPanel (embedded in config mode)  │
 │  │   └── VersionHistory (side panel)                    │
+│  ├── RunsView (call runs history & analytics tab)       │
 │  ├── SetupCall (Max AI wizard — 7 questions)            │
 │  ├── Onboarding (Max intro — 8 steps)                   │
 │  └── CallSimulator (live call test overlay)             │
@@ -141,9 +158,10 @@ Completed flows can be tested immediately in the built-in call simulator before 
 
 ### Flow Data Model
 
-Flows are stored as a **nested tree** (not a flat node graph):
+Flows are stored as a **nested tree** (not a flat node graph), then converted to React Flow's flat nodes/edges format for rendering:
 
 ```js
+// Internal tree (source of truth)
 {
   trigger: { type: 'incoming_call', config: {} },
   nodes: [
@@ -164,7 +182,7 @@ Flows are stored as a **nested tree** (not a flat node graph):
 }
 ```
 
-Branching nodes (`business_hours`, `ai_intent`, `ask_question`, `ab_test`) contain a `branches` array. Each branch holds its own `nodes` array, enabling arbitrary nesting depth.
+The `flowTreeToReactFlow` utility converts this tree into React Flow's flat `{ nodes[], edges[] }` format with auto-computed XY positions, handling branching layout recursively.
 
 ---
 
@@ -183,18 +201,23 @@ central-ai/
 ├── src/
 │   ├── main.jsx                  # React entry point
 │   ├── App.jsx                   # Root component + routing state
+│   ├── index.css                 # Global styles + React Flow overrides + animated edge keyframes
 │   ├── components/
 │   │   ├── AppShell.jsx          # Layout shell + navigation
 │   │   ├── TemplateGallery.jsx   # Template browser + workflows table
-│   │   ├── FlowEditor.jsx        # Flow editor container
-│   │   ├── FlowCanvas.jsx        # Canvas renderer + Cmd+F finder
-│   │   ├── NodeLibrary.jsx       # Node sidebar with search/filter
-│   │   ├── NodeConfigPanel.jsx   # Node property editor
+│   │   ├── NewWorkflowChooser.jsx # New workflow creation modal/chooser
+│   │   ├── FlowEditor.jsx        # Flow editor container + state orchestrator
+│   │   ├── FlowCanvas.jsx        # @xyflow/react canvas + WorkflowNode + AnimatedSVGEdge
+│   │   ├── RightPanel.jsx        # Unified right panel (library/config/idle mode switcher)
+│   │   ├── NodeLibrary.jsx       # Node picker (embedded in RightPanel library mode)
+│   │   ├── NodeConfigPanel.jsx   # Node property editor (embedded in RightPanel config mode)
+│   │   ├── RunsView.jsx          # Runs history tab + analytics view
 │   │   ├── VersionHistory.jsx    # Version history side panel
 │   │   ├── SetupCall.jsx         # Max AI setup wizard
 │   │   ├── Onboarding.jsx        # Max intro onboarding
 │   │   ├── CallSimulator.jsx     # Live call simulation overlay
 │   │   ├── VoiceOrb.jsx          # Animated voice orb component
+│   │   ├── VoiceOrb.css          # Voice orb animation styles
 │   │   ├── SetupFlowPreview.jsx  # Flow preview in setup wizard
 │   │   └── ui/                   # shadcn/base-ui primitives
 │   │       ├── alert-dialog.jsx
@@ -216,7 +239,7 @@ central-ai/
 │   │       ├── textarea.jsx
 │   │       └── tooltip.jsx
 │   ├── data/
-│   │   ├── nodeDefinitions.js    # All 21 node type definitions
+│   │   ├── nodeDefinitions.js    # All 26 node type definitions
 │   │   └── templates.js          # All 25 templates across 6 business types
 │   ├── hooks/
 │   │   ├── useVoiceChat.js       # AI conversation management
@@ -224,7 +247,8 @@ central-ai/
 │   │   ├── useAudioPlayer.js     # ElevenLabs TTS audio playback
 │   │   └── useTransitionSound.js # UI transition audio cue
 │   └── lib/
-│       └── utils.js              # cn() class merging utility
+│       ├── utils.js              # cn() class merging utility
+│       └── flowTreeToReactFlow.js # Tree→React Flow nodes/edges converter
 ├── components.json               # shadcn config (style: base-nova)
 ├── vite.config.js
 ├── package.json
@@ -362,10 +386,19 @@ The Delete action shows an `AlertDialog` confirmation before removing the row.
 The main editor container. Manages:
 
 - **Flow tree state** (`flowTree`) — The complete nested flow data structure
+- **Panel mode state** (`panelMode`) — `'idle' | 'library' | 'config'` controls the right panel
+- **Add-after state** (`addAfterNodeId`) — Tracks which node's `+` button was clicked, so the library knows where to insert
 - **Undo / Redo stacks** — Up to 20 snapshots; Cmd+Z / Cmd+Shift+Z
 - **Flow name** — Inline-editable in the top bar
 - **Status** — Draft → Modified (on any change) → Published (on publish)
 - **Version history** — Snapshots created on every publish; up to 20 kept
+
+Key handlers:
+- `handlePlusClick(nodeId)` — Sets `panelMode='library'` and `addAfterNodeId=nodeId`
+- `handleSelectNode(nodeId)` — Sets `panelMode='config'` and `selectedNodeId=nodeId`
+- `handleAddNodeFromLibrary(nodeType)` — Calls `insertNodeAfter` to splice the new node into the tree after `addAfterNodeId`, then resets to idle
+- `handlePanelBack()` — Resets panel to `'idle'`
+- `insertNodeAfter(tree, targetId, newNode)` — Recursive tree helper that finds `targetId` in any branch and inserts `newNode` immediately after it
 
 Top bar elements:
 - Back button → returns to Workflows view
@@ -384,21 +417,56 @@ Delete Workflow shows an `AlertDialog` confirmation dialog.
 
 **File:** `src/components/FlowCanvas.jsx`
 
-The visual canvas that renders the flow tree as a scrollable, interactive node diagram.
+The visual canvas built on **`@xyflow/react` (React Flow v12)**. Renders the flow tree as an interactive directed graph.
 
-**Rendering:** Recursively renders the `nodes` array. Branching nodes expand inline to show their branches and each branch's child nodes in indented columns.
+#### Custom Node: `WorkflowNode`
+Attio-inspired card design:
+- **Outer shell** — `bg-gray-100` rounded container with subtle border
+- **Inner card** — White `bg-white` with node label, description, and category icon
+- **Trigger tab** — Top-left colored tab showing the node category color
+- **Category tag** — Colored pill badge (Core / Logic / Integration / AI)
+- **Plus button** — Separate circular blue button below the node (not part of the Handle); clicking it fires `onPlusClick(nodeId)` to open the library
+- **Source / Target Handles** — Invisible React Flow connection handles for edge routing; overlaid by the visible `+` button
 
-**Node Finder (Cmd+F / Ctrl+F):**
-- Press `Cmd+F` or `Ctrl+F` to open a floating search bar at the top of the canvas
-- Matching nodes get a **yellow highlight ring** (`ring-2 ring-amber-400`)
-- Non-matching nodes are **dimmed** (`opacity-30`)
-- Shows "X of N matches" counter
-- Press `Escape` or click ✕ to close
-- Search state is passed through `TreeContext` so deeply nested `NodeCard` components can access it
+#### Custom Edge: `AnimatedSVGEdge`
+- Smooth-step SVG path between nodes
+- Animated SVG gradient overlay (CSS keyframes in `index.css`)
+- Renders a flowing colored line effect along each connection
 
-**Drag-and-drop:** Nodes can be dragged from the NodeLibrary and dropped onto the canvas.
+#### Tree-to-Graph Conversion
+`src/lib/flowTreeToReactFlow.js` converts the nested flow tree into React Flow's flat `{ nodes[], edges[] }` format:
+- Recursively walks the tree
+- Auto-computes XY positions (vertical stacking, horizontal branching)
+- Handles arbitrary branch depth
+- Returns ready-to-use arrays for `<ReactFlow nodes={} edges={} />`
 
-**Node interactions:** Click a node to select it (highlights it and opens NodeConfigPanel). Nodes can be deleted via a ✕ button or moved via drag handles.
+**Node interactions:**
+- Click a node → `onSelectNode(nodeId)` → opens config panel
+- Click `+` button below node → `onPlusClick(nodeId)` → opens library panel
+
+---
+
+### RightPanel
+
+**File:** `src/components/RightPanel.jsx`
+
+Thin mode-switching wrapper (~50 lines) that renders the correct content based on `panelMode`:
+
+| Mode | Content | Trigger |
+|------|---------|---------|
+| `'idle'` | Panel hidden (returns `null`) | Default state |
+| `'library'` | `<NodeLibrary>` embedded | Click `+` on any node |
+| `'config'` | `<NodeConfigPanel>` embedded | Click an existing node |
+
+Props:
+- `panelMode` — `'idle' | 'library' | 'config'`
+- `node` — The selected node object (config mode)
+- `addAfterNodeId` — Target node ID (library mode)
+- `onClose` / `onBack` — Resets to idle
+- `onUpdate` / `onDelete` — Forwarded to NodeConfigPanel
+- `onAddNode(nodeType)` — Forwarded to NodeLibrary; triggers `handleAddNodeFromLibrary` in FlowEditor
+
+Fixed width `w-[340px]`, `border-l border-gray-200`, white background. Back arrow (`←`) visible in both library and config modes.
 
 ---
 
@@ -406,16 +474,15 @@ The visual canvas that renders the flow tree as a scrollable, interactive node d
 
 **File:** `src/components/NodeLibrary.jsx`
 
-Collapsible left sidebar listing all 21 node types, organized into 4 categories.
+Node picker panel embedded inside `RightPanel` when in library mode.
 
 **Features:**
+- **"Next step" header** — Clear label showing this is for adding a next step
 - **Text search** — Filters nodes by name and description
 - **Category filter pills** — All · Core · Logic · Integration · AI (with node counts)
-- Combined filtering: text + category work together
-- **Drag-to-canvas** — Each node card is `draggable` with `dataTransfer.setData('nodeType', ...)`
-- **Click-to-add** — Clicking a node adds it at the end of the current flow
+- **Click-to-add** — Clicking a node type calls `onAddNode(nodeType)` to insert it after the target node
+- No drag-and-drop (simplified for embedded right panel use)
 - "Clear filters" shortcut when no results found
-- Collapsible to icons-only mode (48px wide)
 
 **Category colors:**
 | Category | Color |
@@ -431,7 +498,7 @@ Collapsible left sidebar listing all 21 node types, organized into 4 categories.
 
 **File:** `src/components/NodeConfigPanel.jsx`
 
-Right-side panel that appears when a node is selected. Renders dynamic config fields based on the node type definition.
+Config panel embedded inside `RightPanel` when in config mode. Renders dynamic config fields based on the node type definition.
 
 **Field types supported:**
 | Type | Component |
@@ -447,7 +514,20 @@ Right-side panel that appears when a node is selected. Renders dynamic config fi
 
 **Delete Node** button triggers an `<AlertDialog>` confirmation before removing the node from the tree.
 
-The panel body is wrapped in `<ScrollArea>` to handle long config lists cleanly.
+The panel body is wrapped in `<ScrollArea>` to handle long config lists cleanly. Returns `null` when no node is selected (no idle placeholder).
+
+---
+
+### RunsView
+
+**File:** `src/components/RunsView.jsx`
+
+A dedicated tab in the editor showing historical call run data and analytics. Accessible via the "Runs" tab in the FlowEditor top bar.
+
+**Features:**
+- List of past call runs with timestamps and outcomes
+- Run status indicators (completed, failed, in-progress)
+- Basic analytics summary (total runs, success rate, etc.)
 
 ---
 
@@ -539,7 +619,7 @@ A slide-in panel (from the right, over the canvas) showing all saved versions of
 
 ## Node Types
 
-All 21 node types are defined in `src/data/nodeDefinitions.js`.
+All 26 node types are defined in `src/data/nodeDefinitions.js`.
 
 ### Core (6 nodes)
 | Type | Label | Description |
@@ -722,9 +802,9 @@ Browser autoplay policies block audio until a user gesture. When the user clicks
 
 ## UI Component System
 
-The project uses **shadcn** with the `base-nova` style, built on `@base-ui/react` (not Radix UI). All 18 UI primitives live in `src/components/ui/`.
+The project uses **shadcn** with the `base-nova` style, built on `@base-ui/react` (not Radix UI). All UI primitives live in `src/components/ui/`.
 
-> ⚠️ **Important for contributors:** This project uses `@base-ui/react` as its primitive layer, **not Radix UI**. The key difference is that `DropdownMenuItem` (and other interactive items) use standard `onClick` handlers — **not** Radix's `onSelect` callback.
+> **Important for contributors:** This project uses `@base-ui/react` as its primitive layer, **not Radix UI**. The key difference is that `DropdownMenuItem` (and other interactive items) use standard `onClick` handlers — **not** Radix's `onSelect` callback.
 
 ### Installed Components
 
@@ -862,6 +942,7 @@ import { Button } from '@/components/ui/button';
 - Animations: `animate-in fade-in`, `slide-in-from-right` via `tw-animate-css`
 - Panels: `bg-surface border-l border-border shadow-xl`
 - Cards: `rounded-xl border border-border bg-surface shadow-sm`
+- React Flow canvas: Custom node/edge types override default styling; animated edges use CSS keyframe gradients defined in `index.css`
 
 ---
 
@@ -882,4 +963,4 @@ Components install to `src/components/ui/` automatically via the `components.jso
 
 ---
 
-*Built with React 19, Vite, Tailwind CSS 4, shadcn/base-ui, and Claude AI.*
+*Built with React 19, Vite, Tailwind CSS 4, @xyflow/react, shadcn/base-ui, and Claude AI.*
