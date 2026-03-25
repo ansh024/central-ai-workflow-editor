@@ -4,10 +4,12 @@ import { Search } from 'lucide-react';
 import * as Icons from 'lucide-react';
 
 const CATEGORY_STYLES = {
-  core: { iconBg: '#E5EEFF', iconStroke: '#407FF2', dot: 'bg-[#407FF2]' },
-  logic: { iconBg: '#FFF3CC', iconStroke: '#F5B900', dot: 'bg-[#F5B900]' },
+  trigger:     { iconBg: '#F3E8FF', iconStroke: '#8B5CF6', dot: 'bg-[#8B5CF6]' },
+  core:        { iconBg: '#E5EEFF', iconStroke: '#407FF2', dot: 'bg-[#407FF2]' },
+  logic:       { iconBg: '#FFF3CC', iconStroke: '#F5B900', dot: 'bg-[#F5B900]' },
   integration: { iconBg: '#DCFCE7', iconStroke: '#16A34A', dot: 'bg-[#16A34A]' },
-  ai: { iconBg: '#FFE4E6', iconStroke: '#E11D48', dot: 'bg-[#E11D48]' },
+  industry:    { iconBg: '#CCFBF1', iconStroke: '#14B8A6', dot: 'bg-[#14B8A6]' },
+  ai:          { iconBg: '#FFE4E6', iconStroke: '#E11D48', dot: 'bg-[#E11D48]' },
 };
 
 export default function NodeLibrary({ onAddNode }) {
@@ -45,11 +47,13 @@ export default function NodeLibrary({ onAddNode }) {
   };
 
   const allNodes = Object.values(NODE_TYPES);
+  const q = search.toLowerCase();
   const filtered = search
     ? allNodes.filter(
         (n) =>
-          n.label.toLowerCase().includes(search.toLowerCase()) ||
-          n.description.toLowerCase().includes(search.toLowerCase())
+          n.label.toLowerCase().includes(q) ||
+          n.description.toLowerCase().includes(q) ||
+          (n.tags || []).some((t) => t.toLowerCase().includes(q))
       )
     : null;
 
