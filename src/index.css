@@ -154,3 +154,43 @@ body {
     @apply font-sans;
   }
 }
+
+/* React Flow animated edges */
+.animated-edge {
+  stroke-dasharray: 50 150;
+  animation: flow-animation 2s linear infinite;
+}
+
+@keyframes flow-animation {
+  from {
+    stroke-dashoffset: 200;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* React Flow overrides */
+.react-flow__node {
+  cursor: pointer !important;
+}
+
+.react-flow__controls {
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+
+.react-flow__controls-button {
+  border-bottom: 1px solid #e5e7eb !important;
+  width: 28px !important;
+  height: 28px !important;
+}
+
+.react-flow__controls-button:last-child {
+  border-bottom: none !important;
+}
+
+.react-flow__controls-button svg {
+  max-width: 14px !important;
+  max-height: 14px !important;
+}

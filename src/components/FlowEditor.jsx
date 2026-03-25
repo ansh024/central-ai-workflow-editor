@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
-import NodeLibrary from './NodeLibrary';
 import FlowCanvas from './FlowCanvas';
-import NodeConfigPanel from './NodeConfigPanel';
+import RightPanel from './RightPanel';
+import RunsView from './RunsView';
 import VersionHistory from './VersionHistory';
 import { NODE_TYPES } from '../data/nodeDefinitions';
 import {
@@ -38,9 +38,11 @@ export default function FlowEditor({ initialFlow, flowName: initName, onBack, on
   // flowTree is the tree-structured flow data
   const [flowTree, setFlowTree] = useState(initialFlow || { trigger: { type: 'incoming_call', config: {} }, nodes: [] });
   const [selectedNodeId, setSelectedNodeId] = useState(null);
-  const [libraryCollapsed, setLibraryCollapsed] = useState(false);
+  const [panelMode, setPanelMode] = useState('idle'); // 'idle' | 'config' | 'library'
+  const [addAfterNodeId, setAddAfterNodeId] = useState(null);
   const [flowName, setFlowName] = useState(initName || 'Untitled Flow');
   const [status, setStatus] = useState('Draft');
+  const [editorTab, setEditorTab] = useState('edit'); // 'edit' | 'runs'
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -162,23 +164,55 @@ export default function FlowEditor({ initialFlow, flowName: initName, onBack, on
     const newTree = deleteNodeFromTree(flowTree, id);
     setFlowTree(newTree);
     setSelectedNodeId(null);
+    setPanelMode('idle');
     setStatus('Modified');
     onNodesChange?.(newTree);
   }, [flowTree, deleteNodeFromTree, pushUndo, onNodesChange]);
 
-  const handleAddNode = useCallback((afterNodeId, depth) => {
-    // For now, just append to root nodes
-    pushUndo(flowTree);
-    const id = 'n' + nextId++;
-    const newNode = { id, type: 'greeting', config: { message: 'Hello! How can I help you?' } };
-    const newTree = { ...flowTree, nodes: [...flowTree.nodes, newNode] };
-    setFlowTree(newTree);
-    setSelectedNodeId(id);
-    setStatus('Modified');
-    onNodesChange?.(newTree);
-  }, [flowTree, pushUndo, onNodesChange]);
+  // Insert a new node after the given node ID in the tree
+  const insertNodeAfter = useCallback((tree, afterNodeId, newNode) => {
+    if (afterNodeId === 'trigger') {
+      return { ...tree, nodes: [newNode, ...tree.nodes] };
+    }
+    const insertInList = (nodes) => {
+      const result = [];
+      for (const n of nodes) {
+        result.push(
+          n.branches
+            ? { ...n, branches: n.branches.map((b) => ({ ...b, nodes: insertInList(b.nodes) })) }
+            : n
+        );
+        if (n.id === afterNodeId) {
+          result.push(newNode);
+        }
+      }
+      return result;
+    };
+    return { ...tree, nodes: insertInList(tree.nodes) };
+  }, []);
 
-  const handleDropNode = useCallback((type) => {
+  // Handle "+" click on a node — show library
+  const handlePlusClick = useCallback((nodeId) => {
+    setPanelMode('library');
+    setAddAfterNodeId(nodeId);
+    setSelectedNodeId(null);
+  }, []);
+
+  // Handle node selection — show config
+  const handleSelectNode = useCallback((nodeId) => {
+    if (nodeId) {
+      setPanelMode('config');
+      setSelectedNodeId(nodeId);
+      setAddAfterNodeId(null);
+    } else {
+      setPanelMode('idle');
+      setSelectedNodeId(null);
+      setAddAfterNodeId(null);
+    }
+  }, []);
+
+  // Handle picking a node type from the library
+  const handleAddNodeFromLibrary = useCallback((type) => {
     pushUndo(flowTree);
     const id = 'n' + nextId++;
     const def = NODE_TYPES[type];
@@ -189,12 +223,21 @@ export default function FlowEditor({ initialFlow, flowName: initName, onBack, on
       });
     }
     const newNode = { id, type, config };
-    const newTree = { ...flowTree, nodes: [...flowTree.nodes, newNode] };
+    const newTree = insertNodeAfter(flowTree, addAfterNodeId || 'trigger', newNode);
     setFlowTree(newTree);
     setSelectedNodeId(id);
+    setPanelMode('config');
+    setAddAfterNodeId(null);
     setStatus('Modified');
     onNodesChange?.(newTree);
-  }, [flowTree, pushUndo, onNodesChange]);
+  }, [flowTree, addAfterNodeId, insertNodeAfter, pushUndo, onNodesChange]);
+
+  // Handle back / close on the right panel
+  const handlePanelBack = useCallback(() => {
+    setPanelMode('idle');
+    setSelectedNodeId(null);
+    setAddAfterNodeId(null);
+  }, []);
 
   // Publishing
   const handlePublish = () => {
@@ -313,6 +356,30 @@ export default function FlowEditor({ initialFlow, flowName: initName, onBack, on
             </button>
           )}
 
+          {/* Edit / Runs tabs */}
+          <div className="flex items-center bg-slate-100 rounded-lg p-0.5 ml-2">
+            <button
+              onClick={() => setEditorTab('edit')}
+              className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-all duration-200 cursor-pointer focus:outline-none ${
+                editorTab === 'edit'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Edit
+            </button>
+            <button
+              onClick={() => setEditorTab('runs')}
+              className={`px-3 py-1.5 rounded-md text-[12px] font-medium transition-all duration-200 cursor-pointer focus:outline-none ${
+                editorTab === 'runs'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Runs
+            </button>
+          </div>
+
           <div className="flex-1" />
 
           {/* Undo/Redo */}
@@ -393,45 +460,47 @@ export default function FlowEditor({ initialFlow, flowName: initName, onBack, on
           </DropdownMenu>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 flex overflow-hidden">
-          <NodeLibrary
-            onAddNode={(type) => handleDropNode(type)}
-            collapsed={libraryCollapsed}
-            onToggle={() => setLibraryCollapsed(!libraryCollapsed)}
-          />
-          <FlowCanvas
-            flowTree={flowTree}
-            selectedNodeId={selectedNodeId}
-            onSelectNode={setSelectedNodeId}
-            onAddNodeAt={handleAddNode}
-            onDropNode={handleDropNode}
-          />
-          <NodeConfigPanel
-            node={selectedNode}
-            onUpdate={handleUpdateNode}
-            onDelete={handleDeleteNode}
-            onClose={() => setSelectedNodeId(null)}
-          />
-        </div>
+        {/* Validation Bar — below header, only on Edit tab */}
+        {editorTab === 'edit' && (
+          <div className="h-10 border-b border-border bg-surface flex items-center px-4 shrink-0">
+            {issues.length > 0 ? (
+              <button className="flex items-center gap-2 text-amber-600 cursor-pointer hover:text-amber-700 transition-colors duration-200 focus:outline-none">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span className="text-xs font-semibold">{issues.length} issue{issues.length > 1 ? 's' : ''} found</span>
+                <span className="text-[11px] text-text-light ml-1 font-normal">— {issues[0]}</span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 text-emerald-600">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span className="text-xs font-semibold">Flow is valid</span>
+              </div>
+            )}
+            <div className="flex-1" />
+            <span className="text-[11px] text-text-light font-medium">{totalNodes} nodes</span>
+          </div>
+        )}
 
-        {/* Bottom Validation Bar */}
-        <div className="h-10 border-t border-border bg-surface flex items-center px-4 shrink-0">
-          {issues.length > 0 ? (
-            <button className="flex items-center gap-2 text-amber-600 cursor-pointer hover:text-amber-700 transition-colors duration-200 focus:outline-none">
-              <AlertTriangle className="w-3.5 h-3.5" />
-              <span className="text-xs font-semibold">{issues.length} issue{issues.length > 1 ? 's' : ''} found</span>
-              <span className="text-[11px] text-text-light ml-1 font-normal">— {issues[0]}</span>
-            </button>
-          ) : (
-            <div className="flex items-center gap-2 text-emerald-600">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span className="text-xs font-semibold">Flow is valid</span>
-            </div>
-          )}
-          <div className="flex-1" />
-          <span className="text-[11px] text-text-light font-medium">{totalNodes} nodes</span>
-        </div>
+        {/* Main Content */}
+        {editorTab === 'edit' ? (
+          <div className="flex-1 flex overflow-hidden">
+            <FlowCanvas
+              flowTree={flowTree}
+              selectedNodeId={selectedNodeId}
+              onSelectNode={handleSelectNode}
+              onPlusClick={handlePlusClick}
+            />
+            <RightPanel
+              panelMode={panelMode}
+              node={selectedNode}
+              onUpdate={handleUpdateNode}
+              onDelete={handleDeleteNode}
+              onAddNode={handleAddNodeFromLibrary}
+              onBack={handlePanelBack}
+            />
+          </div>
+        ) : (
+          <RunsView />
+        )}
 
         {/* Version History Panel */}
         {showVersionHistory && (

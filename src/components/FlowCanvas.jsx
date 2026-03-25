@@ -1,270 +1,285 @@
-import { useState, useCallback, useEffect, useRef, createContext, useContext } from 'react';
-import { NODE_TYPES, NODE_CATEGORIES } from '../data/nodeDefinitions';
-import { Plus, ChevronRight, ChevronDown, Workflow, GripVertical, Search, X } from 'lucide-react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  useNodesState,
+  useEdgesState,
+  Handle,
+  Position,
+  BaseEdge,
+  EdgeLabelRenderer,
+  getSmoothStepPath,
+  ReactFlowProvider,
+  addEdge,
+  useReactFlow,
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+import { Plus, Search, X } from 'lucide-react';
 import * as Icons from 'lucide-react';
+import { NODE_TYPES, NODE_CATEGORIES } from '../data/nodeDefinitions';
+import { flowTreeToReactFlow } from '../lib/flowTreeToReactFlow';
 
-// Context for expand/collapse state
-const TreeContext = createContext();
+// ── Custom Node Component ──
+function WorkflowNode({ data, selected }) {
+  const isTrigger = data.nodeType === 'trigger';
+  const isCondition = data.nodeType === 'condition';
+  const IconComponent = Icons[data.icon] || Icons.Circle;
 
-function useTree() {
-  return useContext(TreeContext);
-}
-
-// Count nodes in a branch (including nested)
-function countBranchNodes(nodes) {
-  let count = 0;
-  for (const node of nodes) {
-    count++;
-    if (node.branches) {
-      for (const branch of node.branches) {
-        count += countBranchNodes(branch.nodes);
-      }
-    }
-  }
-  return count;
-}
-
-// Find the terminal node type label in a branch
-function getTerminalAction(nodes) {
-  if (!nodes || nodes.length === 0) return null;
-  const last = nodes[nodes.length - 1];
-  // Check if last node has branches with deeper nodes
-  if (last.branches && last.branches.length > 0) {
-    // Return the type of the branching node itself
-    const def = NODE_TYPES[last.type];
-    return def?.label || last.type;
-  }
-  const def = NODE_TYPES[last.type];
-  return def?.label || last.type;
-}
-
-// ── Collapsed Branch Card ──
-function CollapsedBranchCard({ branch, depth, onExpand, parentColor }) {
-  const nodeCount = countBranchNodes(branch.nodes);
-  const terminalAction = getTerminalAction(branch.nodes);
+  const bgColor = getCategoryBgColor(data.category);
+  const strokeColor = getCategoryStrokeColor(data.category);
 
   return (
-    <button
-      onClick={onExpand}
-      className="w-full text-left rounded-xl border border-border bg-surface hover:shadow-md hover:border-slate-300 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-1 group"
+    <div
+      className={`relative flex items-center justify-center rounded-xl shadow-xs w-[300px] transition-all duration-200 ${
+        selected
+          ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-gray-50'
+          : ''
+      }`}
+      style={{ backgroundColor: '#e5e7eb' }}
     >
-      {/* Color accent */}
-      <div className="absolute left-0 top-2 bottom-2 w-1 rounded-full" style={{ backgroundColor: parentColor || '#94A3B8' }} />
-
-      <div className="pl-5 pr-4 py-3.5">
-        <div className="flex items-center gap-2.5 mb-1">
-          <ChevronRight className="w-4 h-4 text-text-light group-hover:text-primary transition-colors duration-200 shrink-0" />
-          <span className="text-[13px] font-semibold text-text-dark">{branch.label}</span>
-        </div>
-        <div className="flex items-center gap-3 ml-[26px] text-[11px] text-text-light">
-          <span>{nodeCount} node{nodeCount !== 1 ? 's' : ''}</span>
-          {terminalAction && (
-            <>
-              <span className="text-slate-300">·</span>
-              <span>Ends with: {terminalAction}</span>
-            </>
-          )}
-        </div>
-      </div>
-    </button>
-  );
-}
-
-// ── Expanded Branch Header ──
-function ExpandedBranchHeader({ branch, onCollapse, parentColor }) {
-  return (
-    <button
-      onClick={onCollapse}
-      className="w-full text-left flex items-center gap-2.5 px-4 py-2.5 rounded-lg hover:bg-slate-50 transition-colors duration-200 cursor-pointer focus:outline-none group"
-    >
-      <ChevronDown className="w-4 h-4 text-primary shrink-0" />
-      <span className="text-[13px] font-semibold" style={{ color: parentColor || '#0EA5E9' }}>{branch.label}</span>
-      <span className="text-[11px] text-text-light ml-auto opacity-0 group-hover:opacity-100 transition-opacity duration-200">collapse</span>
-    </button>
-  );
-}
-
-// ── Node Card (trunk node) ──
-function NodeCard({ node, onSelect, isSelected }) {
-  const { onAddNode, findQuery } = useTree();
-  const nodeDef = NODE_TYPES[node.type];
-  if (!nodeDef) return null;
-  const cat = NODE_CATEGORIES[nodeDef.category];
-  const IconComponent = Icons[nodeDef.icon] || Icons.Circle;
-
-  // Find-highlight logic
-  const isMatch = findQuery && nodeDef.label.toLowerCase().includes(findQuery.toLowerCase());
-  const isDimmed = findQuery && !isMatch;
-
-  const getPreview = () => {
-    if (node.config?.message) return node.config.message;
-    if (node.config?.question) return node.config.question;
-    if (node.config?.closingMessage) return node.config.closingMessage;
-    if (node.config?.transferTo) return `Transfer to ${node.config.transferTo}`;
-    if (node.config?.calendarSource) return node.config.calendarSource;
-    if (node.config?.intents) return node.config.intents;
-    return nodeDef.description;
-  };
-
-  const preview = getPreview();
-  const truncated = preview.length > 65 ? preview.slice(0, 65) + '...' : preview;
-
-  return (
-    <button
-      onClick={() => onSelect(node.id)}
-      className={`w-[280px] text-left rounded-xl bg-surface shadow-sm transition-all duration-200 group relative cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2 border ${
-        isSelected
-          ? 'ring-2 ring-primary shadow-md border-primary/20'
-          : 'border-border hover:shadow-md hover:-translate-y-0.5 hover:border-slate-300'
-      } ${isDimmed ? 'opacity-30' : ''} ${isMatch ? 'ring-2 ring-amber-400 border-amber-300' : ''}`}
-    >
-      <div className="absolute left-0 top-2 bottom-2 w-1 rounded-full" style={{ backgroundColor: cat?.colorHex || '#94A3B8' }} />
-      <div className="pl-5 pr-4 py-3.5">
-        <div className="flex items-center gap-2.5 mb-1.5">
-          <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: cat?.colorHex + '12' }}>
-            <IconComponent className="w-3.5 h-3.5" style={{ color: cat?.colorHex }} />
-          </div>
-          <span className="text-[13px] font-semibold text-text-dark flex-1">{nodeDef.label}</span>
-          <GripVertical className="w-3.5 h-3.5 text-text-light opacity-0 group-hover:opacity-60 transition-opacity duration-200 cursor-grab" />
-        </div>
-        {truncated && (
-          <p className="text-[11px] text-text-light leading-relaxed ml-[34px] line-clamp-2">{truncated}</p>
-        )}
-      </div>
-    </button>
-  );
-}
-
-// ── Connector line + Add button ──
-function Connector({ nodeId, depth }) {
-  const { onAddNode } = useTree();
-  return (
-    <div className="flex flex-col items-center">
-      <div className="w-px h-4 bg-slate-200" />
-      <button
-        onClick={(e) => { e.stopPropagation(); onAddNode(nodeId, depth); }}
-        className="w-6 h-6 rounded-full border border-slate-200 bg-surface flex items-center justify-center text-text-light hover:bg-primary hover:border-primary hover:text-white transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 shadow-sm"
-        title="Add node here"
+      {/* Inner Shell */}
+      <div
+        className={`relative h-[calc(100%-2px)] w-[calc(100%-2px)] bg-white p-[11px] ${
+          isTrigger
+            ? 'rounded-b-[11px] rounded-tl-none rounded-tr-[11px]'
+            : 'rounded-[11px]'
+        }`}
       >
-        <Plus className="w-3 h-3" />
-      </button>
-      <div className="w-px h-4 bg-slate-200" />
-    </div>
-  );
-}
-
-// ── Branch Point: renders branches as collapsible cards ──
-function BranchPoint({ node, depth, onSelect, selectedNodeId }) {
-  const { expandedBranches, toggleBranch } = useTree();
-  const nodeDef = NODE_TYPES[node.type];
-  const cat = NODE_CATEGORIES[nodeDef?.category];
-
-  if (!node.branches || node.branches.length === 0) return null;
-
-  return (
-    <div className="flex flex-col items-center w-full">
-      {node.branches.map((branch) => {
-        const isExpanded = expandedBranches.has(branch.id);
-        const indent = depth * 16;
-
-        return (
-          <div key={branch.id} className="w-full flex flex-col items-center">
-            {/* Branch connector */}
-            <div className="flex items-center gap-2 w-[280px]" style={{ paddingLeft: indent }}>
-              <div className="w-4 border-t-2 border-dashed" style={{ borderColor: cat?.colorHex || '#94A3B8' }} />
-              <div className="flex-1">
-                {isExpanded ? (
-                  <ExpandedBranchHeader
-                    branch={branch}
-                    onCollapse={() => toggleBranch(branch.id, depth)}
-                    parentColor={cat?.colorHex}
-                  />
-                ) : (
-                  <CollapsedBranchCard
-                    branch={branch}
-                    depth={depth}
-                    onExpand={() => toggleBranch(branch.id, depth)}
-                    parentColor={cat?.colorHex}
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* Expanded branch contents */}
-            {isExpanded && (
-              <div className="flex flex-col items-center mt-1 mb-2 animate-in slide-in-from-top-2 fade-in duration-200">
-                <div className="w-px h-3" style={{ backgroundColor: cat?.colorHex + '40' }} />
-                <NodeList
-                  nodes={branch.nodes}
-                  depth={depth + 1}
-                  onSelect={onSelect}
-                  selectedNodeId={selectedNodeId}
-                  accentColor={cat?.colorHex}
-                />
-              </div>
-            )}
-
-            {/* Spacer between sibling branches */}
-            <div className="h-1.5" />
+        {/* Trigger Tab */}
+        {isTrigger && (
+          <div className="absolute -top-6 left-0 flex items-center gap-x-1 rounded-t-[10px] border-gray-200 border-x border-t bg-gray-50 px-[7.5px] py-[3.5px] text-gray-500 text-xs">
+            <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse" />
+            Trigger
           </div>
-        );
-      })}
-    </div>
-  );
-}
+        )}
 
-// ── Node List: renders a linear sequence of nodes with branch points ──
-function NodeList({ nodes, depth = 0, onSelect, selectedNodeId, accentColor }) {
-  if (!nodes || nodes.length === 0) return null;
+        {/* Condition badge */}
+        {isCondition && (
+          <div className="absolute right-0 flex items-center gap-x-1 rounded-lg border border-gray-200 bg-gray-50 px-[5px] py-px top-[-30px] text-gray-500 text-xs">
+            Branches
+          </div>
+        )}
 
-  return (
-    <div className="flex flex-col items-center">
-      {/* Accent border for nested branches */}
-      {depth > 0 && (
-        <div className="relative w-full flex flex-col items-center" style={{
-          borderLeft: `2px solid ${accentColor || '#94A3B8'}20`,
-          marginLeft: depth * 4,
-          paddingLeft: 8,
-        }}>
-          {nodes.map((node, i) => (
-            <div key={node.id} className="flex flex-col items-center w-full">
-              <NodeCard node={node} onSelect={onSelect} isSelected={selectedNodeId === node.id} />
-              {/* Connector + Add button (unless last node without branches) */}
-              {(i < nodes.length - 1 || (node.branches && node.branches.length > 0)) && (
-                <Connector nodeId={node.id} depth={depth} />
-              )}
-              {/* Branch point */}
-              {node.branches && node.branches.length > 0 && (
-                <BranchPoint node={node} depth={depth + 1} onSelect={onSelect} selectedNodeId={selectedNodeId} />
-              )}
-            </div>
-          ))}
+        {/* Header */}
+        <div className="flex gap-x-1.5 border-gray-200 border-b pb-[11px] items-center">
+          <div
+            className="flex items-center justify-center w-6 h-6 rounded-md"
+            style={{ backgroundColor: bgColor }}
+          >
+            <IconComponent
+              className="w-4 h-4"
+              style={{ color: strokeColor }}
+            />
+          </div>
+          <div className="flex-1 truncate text-gray-900 text-sm font-medium tracking-[-0.3px]">
+            {data.label}
+          </div>
+          <div className="justify-self-end rounded-lg border border-gray-200 bg-gray-50 px-[6px] py-px text-gray-500 text-xs">
+            {data.tag || data.categoryLabel}
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="mt-2 truncate text-gray-500 text-xs leading-relaxed">
+          {data.description
+            ? data.description.length > 80
+              ? data.description.slice(0, 80) + '...'
+              : data.description
+            : ''}
+        </div>
+      </div>
+
+      {/* Handles */}
+      {!isTrigger && (
+        <Handle
+          type="target"
+          position={Position.Top}
+          className="!w-3 !h-3 !bg-white !border !border-gray-300"
+        />
+      )}
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="!w-3 !h-3 !bg-white !border !border-gray-300 !z-10"
+      />
+
+      {/* Plus button below handle — only on leaf nodes */}
+      {!data.hasChildren && (
+        <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center">
+          <div className="w-px h-2 bg-gray-300" />
+          <button
+            className="w-6 h-6 rounded-full bg-blue-500 hover:bg-blue-600 flex items-center justify-center shadow-sm transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onPlusClick?.(data.nodeId);
+            }}
+          >
+            <Plus className="w-3.5 h-3.5 text-white pointer-events-none" />
+          </button>
         </div>
       )}
-
-      {depth === 0 && nodes.map((node, i) => (
-        <div key={node.id} className="flex flex-col items-center">
-          <NodeCard node={node} onSelect={onSelect} isSelected={selectedNodeId === node.id} />
-          {(i < nodes.length - 1 || (node.branches && node.branches.length > 0)) && (
-            <Connector nodeId={node.id} depth={depth} />
-          )}
-          {node.branches && node.branches.length > 0 && (
-            <BranchPoint node={node} depth={depth + 1} onSelect={onSelect} selectedNodeId={selectedNodeId} />
-          )}
-        </div>
-      ))}
     </div>
   );
 }
 
-// ── Main FlowCanvas ──
-export default function FlowCanvas({ flowTree, selectedNodeId, onSelectNode, onAddNodeAt, onDropNode }) {
-  const [expandedBranches, setExpandedBranches] = useState(new Set());
+// ── Custom Animated Edge ──
+function AnimatedSVGEdge({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  style = {},
+  markerEnd,
+  label,
+}) {
+  const [edgePath, labelX, labelY] = getSmoothStepPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+    borderRadius: 16,
+  });
+
+  return (
+    <>
+      <BaseEdge
+        path={edgePath}
+        markerEnd={markerEnd}
+        style={{ ...style, stroke: '#D1D3D6', strokeWidth: 1 }}
+      />
+      <path
+        d={edgePath}
+        fill="none"
+        stroke="url(#flow-gradient)"
+        strokeWidth={2}
+        className="animated-edge"
+      />
+      {label && (
+        <EdgeLabelRenderer>
+          <div
+            style={{
+              position: 'absolute',
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+              pointerEvents: 'all',
+            }}
+            className="nodrag nopan"
+          >
+            <div className="rounded-lg border border-gray-200 bg-gray-50 px-[6px] py-px text-gray-500 text-xs whitespace-nowrap">
+              {label}
+            </div>
+          </div>
+        </EdgeLabelRenderer>
+      )}
+    </>
+  );
+}
+
+const nodeTypes = { workflowNode: WorkflowNode };
+const edgeTypes = { animatedSvg: AnimatedSVGEdge };
+
+// ── Helper: category colors ──
+function getCategoryBgColor(category) {
+  const map = {
+    core: '#E5EEFF',
+    logic: '#FFF3CC',
+    integration: '#DCFCE7',
+    ai: '#FFE4E6',
+  };
+  return map[category] || '#F3F4F6';
+}
+
+function getCategoryStrokeColor(category) {
+  const map = {
+    core: '#407FF2',
+    logic: '#F5B900',
+    integration: '#16A34A',
+    ai: '#E11D48',
+  };
+  return map[category] || '#6B7280';
+}
+
+// ── Inner Flow (needs ReactFlowProvider parent) ──
+function FlowCanvasInner({
+  flowTree,
+  selectedNodeId,
+  onSelectNode,
+  onPlusClick,
+}) {
+  const reactFlowInstance = useReactFlow();
   const [findOpen, setFindOpen] = useState(false);
   const [findQuery, setFindQuery] = useState('');
   const findInputRef = useRef(null);
+  const prevTreeRef = useRef(null);
 
-  // Cmd+F / Ctrl+F to open finder, Escape to close
+  // Convert tree to React Flow format
+  const { nodes: rfNodes, edges: rfEdges } = useMemo(
+    () => flowTreeToReactFlow(flowTree),
+    [flowTree]
+  );
+
+  const enrichedInitial = useMemo(
+    () => rfNodes.map((n) => ({ ...n, data: { ...n.data, nodeId: n.id, onPlusClick } })),
+    [rfNodes, onPlusClick]
+  );
+  const [nodes, setNodes, onNodesChange] = useNodesState(enrichedInitial);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(rfEdges);
+
+  // Sync when flowTree changes — inject onPlusClick into each node's data
+  useEffect(() => {
+    const { nodes: newNodes, edges: newEdges } = flowTreeToReactFlow(flowTree);
+    const enriched = newNodes.map((n) => ({
+      ...n,
+      data: { ...n.data, nodeId: n.id, onPlusClick },
+    }));
+    setNodes(enriched);
+    setEdges(newEdges);
+  }, [flowTree, setNodes, setEdges, onPlusClick]);
+
+  // Fit view after initial render
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      reactFlowInstance?.fitView({ padding: 0.2, duration: 300 });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [rfNodes.length]);
+
+  // Update selected state
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((n) => ({
+        ...n,
+        selected: n.id === selectedNodeId,
+      }))
+    );
+  }, [selectedNodeId, setNodes]);
+
+  // Handle node click
+  const onNodeClick = useCallback(
+    (event, node) => {
+      onSelectNode(node.id);
+    },
+    [onSelectNode]
+  );
+
+  // Handle pane click (deselect)
+  const onPaneClick = useCallback(() => {
+    onSelectNode(null);
+  }, [onSelectNode]);
+
+  // Handle new connections
+  const onConnect = useCallback(
+    (params) =>
+      setEdges((eds) => addEdge({ ...params, type: 'animatedSvg' }, eds)),
+    [setEdges]
+  );
+
+  // Cmd+F finder
   useEffect(() => {
     const handler = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
@@ -281,129 +296,101 @@ export default function FlowCanvas({ flowTree, selectedNodeId, onSelectNode, onA
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  const toggleBranch = useCallback((branchId, depth) => {
-    setExpandedBranches((prev) => {
-      const next = new Set(prev);
-      if (next.has(branchId)) {
-        // Collapse this branch and all children
-        next.delete(branchId);
-      } else {
-        // Accordion: collapse siblings at same depth (find parent's branches)
-        // For simplicity, just expand this one
-        next.add(branchId);
-      }
-      return next;
-    });
-  }, []);
-
-  const contextValue = {
-    expandedBranches,
-    toggleBranch,
-    onAddNode: onAddNodeAt,
-    findQuery,
-  };
-
-  // Handle trigger node
-  const triggerNode = flowTree?.trigger;
-  const triggerDef = triggerNode ? NODE_TYPES[triggerNode.type] : null;
-  const triggerCat = triggerDef ? NODE_CATEGORIES[triggerDef.category] : null;
-  const TriggerIcon = triggerDef ? (Icons[triggerDef.icon] || Icons.Circle) : Icons.PhoneIncoming;
-
-  const hasNodes = flowTree?.nodes && flowTree.nodes.length > 0;
+  // Apply find highlighting
+  useEffect(() => {
+    if (!findQuery) {
+      setNodes((nds) => nds.map((n) => ({ ...n, className: '' })));
+      return;
+    }
+    setNodes((nds) =>
+      nds.map((n) => {
+        const isMatch = n.data.label
+          .toLowerCase()
+          .includes(findQuery.toLowerCase());
+        return {
+          ...n,
+          className: isMatch ? 'ring-2 ring-amber-400' : 'opacity-30',
+        };
+      })
+    );
+  }, [findQuery, setNodes]);
 
   return (
-    <TreeContext.Provider value={contextValue}>
-      {/* Floating node finder */}
+    <div className="flex-1 relative">
+      {/* SVG gradient for animated edges */}
+      <svg style={{ position: 'absolute', width: 0, height: 0 }}>
+        <defs>
+          <linearGradient
+            id="flow-gradient"
+            x1="0%"
+            y1="0%"
+            x2="100%"
+            y2="0%"
+          >
+            <stop offset="0%" stopColor="rgba(59, 130, 246, 0)" />
+            <stop offset="50%" stopColor="rgba(59, 130, 246, 1)" />
+            <stop offset="100%" stopColor="rgba(59, 130, 246, 0)" />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      {/* Floating finder */}
       {findOpen && (
-        <div className="absolute top-4 right-4 z-30 flex items-center gap-2 bg-surface border border-border rounded-[10px] shadow-lg px-3 py-2">
-          <Search className="w-3.5 h-3.5 text-text-light shrink-0" />
+        <div className="absolute top-4 right-4 z-30 flex items-center gap-2 bg-white border border-gray-200 rounded-xl shadow-lg px-3 py-2">
+          <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
           <input
             ref={findInputRef}
             type="text"
             value={findQuery}
             onChange={(e) => setFindQuery(e.target.value)}
-            placeholder="Find nodes…"
-            className="text-[13px] text-text-dark bg-transparent border-none outline-none w-40 placeholder:text-placeholder"
+            placeholder="Find nodes..."
+            className="text-[13px] text-gray-900 bg-transparent border-none outline-none w-40 placeholder:text-gray-400"
           />
           <button
-            onClick={() => { setFindOpen(false); setFindQuery(''); }}
-            className="text-text-light hover:text-text-mid cursor-pointer focus:outline-none"
+            onClick={() => {
+              setFindOpen(false);
+              setFindQuery('');
+            }}
+            className="text-gray-400 hover:text-gray-600 cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
-      <div
-        className="flex-1 overflow-auto bg-bg p-8 relative"
-        onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
-        onDrop={(e) => {
-          e.preventDefault();
-          const nodeType = e.dataTransfer.getData('nodeType');
-          if (nodeType && onDropNode) onDropNode(nodeType);
-        }}
+
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
+        onNodeClick={onNodeClick}
+        onPaneClick={onPaneClick}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        connectionLineStyle={{ stroke: '#D1D3D6', strokeWidth: 2 }}
+        defaultEdgeOptions={{ type: 'animatedSvg' }}
+        fitView
+        fitViewOptions={{ padding: 0.2 }}
+        minZoom={0.2}
+        maxZoom={2}
+        proOptions={{ hideAttribution: true }}
       >
-        <div className="flex flex-col items-center min-w-max mx-auto py-6" style={{
-          backgroundImage: 'radial-gradient(circle, #e2e8f0 1px, transparent 1px)',
-          backgroundSize: '24px 24px',
-        }}>
-          {/* Trigger Node (always first) */}
-          {triggerNode && (
-            <div className="flex flex-col items-center">
-              <button
-                onClick={() => onSelectNode('trigger')}
-                className={`w-[280px] text-left rounded-xl bg-surface shadow-sm transition-all duration-200 group relative cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/40 focus:ring-offset-2 border ${
-                  selectedNodeId === 'trigger'
-                    ? 'ring-2 ring-primary shadow-md border-primary/20'
-                    : 'border-border hover:shadow-md hover:-translate-y-0.5 hover:border-slate-300'
-                }`}
-              >
-                <div className="absolute left-0 top-2 bottom-2 w-1 rounded-full" style={{ backgroundColor: triggerCat?.colorHex || '#0EA5E9' }} />
-                <div className="pl-5 pr-4 py-3.5">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: (triggerCat?.colorHex || '#0EA5E9') + '12' }}>
-                      <TriggerIcon className="w-3.5 h-3.5" style={{ color: triggerCat?.colorHex || '#0EA5E9' }} />
-                    </div>
-                    <span className="text-[13px] font-semibold text-text-dark">{triggerDef?.label || 'Incoming Call'}</span>
-                  </div>
-                </div>
-              </button>
-              {hasNodes && <Connector nodeId="trigger" depth={0} />}
-            </div>
-          )}
+        <Background color="#e2e8f0" gap={24} size={1} />
+        <Controls
+          showInteractive={false}
+          className="!bg-white !border !border-gray-200 !rounded-xl !shadow-lg"
+        />
+      </ReactFlow>
+    </div>
+  );
+}
 
-          {/* Main Trunk Nodes */}
-          {hasNodes && (
-            <NodeList
-              nodes={flowTree.nodes}
-              depth={0}
-              onSelect={onSelectNode}
-              selectedNodeId={selectedNodeId}
-            />
-          )}
-
-          {/* Empty state */}
-          {!hasNodes && (
-            <div className="flex flex-col items-center py-16">
-              {!triggerNode && (
-                <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-5">
-                  <Workflow className="w-7 h-7 text-text-light" />
-                </div>
-              )}
-              <p className="text-[15px] font-medium text-text-dark mb-1 mt-6">
-                {triggerNode ? 'Add your first step' : 'No nodes yet'}
-              </p>
-              <p className="text-[13px] text-text-light mb-5">Drag nodes from the library or click below</p>
-              <button
-                onClick={() => onAddNodeAt(null, 0)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-dark transition-colors duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2 shadow-sm"
-              >
-                <Plus className="w-4 h-4" />
-                Add first node
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </TreeContext.Provider>
+// ── Exported Component (wraps with ReactFlowProvider) ──
+export default function FlowCanvas(props) {
+  return (
+    <ReactFlowProvider>
+      <FlowCanvasInner {...props} />
+    </ReactFlowProvider>
   );
 }
