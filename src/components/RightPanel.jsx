@@ -11,7 +11,7 @@ export default function RightPanel({
   onBack,
 }) {
   return (
-    <div className="w-[340px] border-l border-gray-200 bg-white flex flex-col shrink-0">
+    <div className="w-[340px] border-l border-gray-200 bg-white flex flex-col shrink-0 overflow-hidden">
       {/* Back button for config and library modes */}
       {(panelMode === 'config' || panelMode === 'library') && (
         <div className="px-4 pt-3 pb-1">

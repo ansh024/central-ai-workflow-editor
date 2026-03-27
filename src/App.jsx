@@ -70,20 +70,19 @@ function App() {
     handleSelectTemplate(template);
   };
 
-  const handleSetupComplete = (answers, action) => {
-    // Generate a flow tree from setup answers
-    const generatedFlow = generateFlowFromAnswers(answers);
+  const handleSetupComplete = (answers, action, prebuiltFlow) => {
+    const generatedFlow = prebuiltFlow || generateFlowFromAnswers(answers);
+    const name = prebuiltFlow
+      ? (answers?.flowName || 'Max-Generated Flow')
+      : (answers.businessName ? `${answers.businessName} — Main Flow` : 'My Receptionist Flow');
     setCurrentFlow(generatedFlow);
     editorFlowRef.current = generatedFlow;
-    setFlowName(answers.businessName ? `${answers.businessName} — Main Flow` : 'My Receptionist Flow');
+    setFlowName(name);
 
     if (action === 'test') {
       setActiveView('editor');
       setTimeout(() => setShowSimulator(true), 500);
-    } else if (action === 'edit') {
-      setActiveView('editor');
     } else {
-      // go live
       setActiveView('editor');
     }
   };
