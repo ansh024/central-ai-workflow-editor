@@ -32,6 +32,15 @@ export default function useVoiceInput() {
       return;
     }
 
+    // Always clean up any existing session first to avoid InvalidStateError
+    if (recognitionRef.current) {
+      recognitionRef.current.onend = null; // prevent stale onend from flipping state
+      recognitionRef.current.onerror = null;
+      recognitionRef.current.onresult = null;
+      try { recognitionRef.current.abort(); } catch (_) { /* ignore */ }
+      recognitionRef.current = null;
+    }
+
     onResultRef.current = onResult;
     retriesRef.current = 0;
     setError(null);

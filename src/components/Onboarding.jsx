@@ -394,7 +394,17 @@ export default function Onboarding({ onBack, onComplete }) {
     setOrbState('idle');
   }, [audioPlayer]);
 
-  // Speak Max's intro for a step (once per step)
+  // Auto-arm the mic after Max finishes talking
+  const autoStartListening = useCallback(() => {
+    if (processingRef.current || voiceInput.isListening || audioPlayer.isPlaying) return;
+    setOrbState('listening');
+    voiceInput.startListening((finalText) => {
+      setOrbState('idle');
+      processInput(finalText);
+    });
+  }, [voiceInput, audioPlayer, processInput]);
+
+  // Speak Max's intro for a step (once per step), then auto-arm mic
   const speakStepIntro = useCallback(async (stepId) => {
     if (spokenStepsRef.current.has(stepId)) return;
     spokenStepsRef.current.add(stepId);
@@ -402,7 +412,8 @@ export default function Onboarding({ onBack, onComplete }) {
     if (!stepDef) return;
     addMsg('max', stepDef.maxIntro);
     await speak(stepDef.maxIntro);
-  }, [speak, addMsg]);
+    autoStartListening();
+  }, [speak, addMsg, autoStartListening]);
 
   // Speak intro on mount
   useEffect(() => {
@@ -465,20 +476,24 @@ export default function Onboarding({ onBack, onComplete }) {
     setOrbState('idle');
     processingRef.current = false;
     setIsProcessing(false);
-  }, [addMsg, speak]);
+    // Re-arm mic so Max can hear the next response immediately
+    autoStartListening();
+  }, [addMsg, speak, autoStartListening]);
 
-  // Voice input handler
+  // Voice input handler — guard against clicking while Max is speaking/processing
   const toggleListening = useCallback(() => {
     if (voiceInput.isListening) {
       voiceInput.stopListening();
       setOrbState('idle');
     } else {
+      if (isProcessing || audioPlayer.isPlaying) return;
       setOrbState('listening');
       voiceInput.startListening((finalText) => {
+        setOrbState('idle');
         processInput(finalText);
       });
     }
-  }, [voiceInput, processInput]);
+  }, [voiceInput, processInput, isProcessing, audioPlayer]);
 
   // Text input submit
   const handleTextSubmit = (e) => {
