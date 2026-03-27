@@ -145,9 +145,8 @@ export const handler = async (event) => {
       userMessage += `\n\nCurrent step data: ${JSON.stringify(stepData)}`;
     }
 
-    // Haiku is faster + less overloaded than Sonnet 4 for simple extraction
     const response = await withRetry(() => anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-sonnet-4-20250514',
       max_tokens: 512,
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }],
