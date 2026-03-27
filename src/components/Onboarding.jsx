@@ -365,7 +365,6 @@ export default function Onboarding({ onBack, onComplete }) {
   const currentStepRef = useRef(currentStep);
   const messagesEndRef = useRef(null);
   const processingRef = useRef(false);
-  const processInputRef = useRef(null); // ref to break circular dep
 
   // Keep refs in sync
   useEffect(() => { stepDataRef.current = stepData; }, [stepData]);
@@ -395,23 +394,7 @@ export default function Onboarding({ onBack, onComplete }) {
     setOrbState('idle');
   }, [audioPlayer]);
 
-  // Auto-arm the mic after Max finishes talking.
-  // Uses processInputRef instead of processInput directly to avoid a
-  // circular useCallback dependency (processInput ↔ autoStartListening).
-  // 700ms delay lets speaker audio fully decay so the mic doesn't
-  // pick up Max's own TTS voice and feed it back as user input.
-  const autoStartListening = useCallback(() => {
-    setTimeout(() => {
-      if (processingRef.current || voiceInput.isListening || audioPlayer.isPlaying) return;
-      setOrbState('listening');
-      voiceInput.startListening((finalText) => {
-        setOrbState('idle');
-        processInputRef.current?.(finalText);
-      });
-    }, 700);
-  }, [voiceInput, audioPlayer]); // ← no processInput dep
-
-  // Speak Max's intro for a step (once per step), then auto-arm mic
+  // Speak Max's intro for a step (once per step)
   const speakStepIntro = useCallback(async (stepId) => {
     if (spokenStepsRef.current.has(stepId)) return;
     spokenStepsRef.current.add(stepId);
@@ -419,8 +402,7 @@ export default function Onboarding({ onBack, onComplete }) {
     if (!stepDef) return;
     addMsg('max', stepDef.maxIntro);
     await speak(stepDef.maxIntro);
-    autoStartListening();
-  }, [speak, addMsg, autoStartListening]);
+  }, [speak, addMsg]);
 
   // Speak intro on mount
   useEffect(() => {
@@ -488,12 +470,8 @@ export default function Onboarding({ onBack, onComplete }) {
     setOrbState('idle');
     processingRef.current = false;
     setIsProcessing(false);
-    // Re-arm mic so Max can hear the next response immediately
-    autoStartListening();
-  }, [addMsg, speak, autoStartListening]);
+  }, [addMsg, speak]);
 
-  // Keep ref in sync so autoStartListening always calls the latest version
-  useEffect(() => { processInputRef.current = processInput; }, [processInput]);
 
   // Voice input handler — guard against clicking while Max is speaking/processing
   const toggleListening = useCallback(() => {
