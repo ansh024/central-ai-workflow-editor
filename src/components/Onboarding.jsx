@@ -398,13 +398,17 @@ export default function Onboarding({ onBack, onComplete }) {
   // Auto-arm the mic after Max finishes talking.
   // Uses processInputRef instead of processInput directly to avoid a
   // circular useCallback dependency (processInput ↔ autoStartListening).
+  // 700ms delay lets speaker audio fully decay so the mic doesn't
+  // pick up Max's own TTS voice and feed it back as user input.
   const autoStartListening = useCallback(() => {
-    if (processingRef.current || voiceInput.isListening || audioPlayer.isPlaying) return;
-    setOrbState('listening');
-    voiceInput.startListening((finalText) => {
-      setOrbState('idle');
-      processInputRef.current?.(finalText);
-    });
+    setTimeout(() => {
+      if (processingRef.current || voiceInput.isListening || audioPlayer.isPlaying) return;
+      setOrbState('listening');
+      voiceInput.startListening((finalText) => {
+        setOrbState('idle');
+        processInputRef.current?.(finalText);
+      });
+    }, 700);
   }, [voiceInput, audioPlayer]); // ← no processInput dep
 
   // Speak Max's intro for a step (once per step), then auto-arm mic
@@ -447,7 +451,10 @@ export default function Onboarding({ onBack, onComplete }) {
         }),
       });
 
-      if (!response.ok) throw new Error(`Server error: ${response.status}`);
+      if (!response.ok) {
+        const errText = await response.text().catch(() => '');
+        throw new Error(`Server error: ${response.status} — ${errText}`);
+      }
       const result = await response.json();
 
       // Apply AI actions to step data (live form filling)
@@ -473,7 +480,9 @@ export default function Onboarding({ onBack, onComplete }) {
       }
     } catch (e) {
       console.error('Onboarding interpret error:', e);
-      addMsg('max', "Sorry, I didn't catch that. Could you try again?");
+      const errMsg = "Sorry, I didn't catch that. Could you try again?";
+      addMsg('max', errMsg);
+      await speak(errMsg);
     }
 
     setOrbState('idle');

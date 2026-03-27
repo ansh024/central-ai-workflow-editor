@@ -2,6 +2,22 @@ import Anthropic from '@anthropic-ai/sdk';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+// Retry up to 3 times on Anthropic 529 overloaded errors
+async function withRetry(fn, maxRetries = 3) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const isOverloaded = err.status === 529 || err.error?.type === 'overloaded_error';
+      if (isOverloaded && attempt < maxRetries - 1) {
+        await new Promise(r => setTimeout(r, (attempt + 1) * 1000)); // 1s, 2s
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 const STEP_PROMPTS = {
   1: `You are an onboarding assistant extracting business information from a user's spoken input.
 
@@ -129,12 +145,12 @@ export const handler = async (event) => {
       userMessage += `\n\nCurrent step data: ${JSON.stringify(stepData)}`;
     }
 
-    const response = await anthropic.messages.create({
+    const response = await withRetry(() => anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1024,
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }],
-    });
+    }));
 
     const text = response.content
       .filter((b) => b.type === 'text')
@@ -152,7 +168,15 @@ export const handler = async (event) => {
       body: jsonMatch[0],
     };
   } catch (err) {
-    console.error('voice-onboarding error:', err.message);
-    return { statusCode: 500, body: JSON.stringify({ error: 'AI interpretation failed', details: err.message }) };
+    console.error('voice-onboarding error:', err.message, err.status, err.error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({
+        error: 'AI interpretation failed',
+        details: err.message,
+        anthropicStatus: err.status,
+        anthropicError: err.error,
+      }),
+    };
   }
 };

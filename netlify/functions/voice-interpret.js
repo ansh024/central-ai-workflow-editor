@@ -3,6 +3,22 @@ import { SYSTEM_PROMPT, buildUserMessage } from '../../server/config/prompts.js'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+// Retry up to 3 times on Anthropic 529 overloaded errors
+async function withRetry(fn, maxRetries = 3) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const isOverloaded = err.status === 529 || err.error?.type === 'overloaded_error';
+      if (isOverloaded && attempt < maxRetries - 1) {
+        await new Promise(r => setTimeout(r, (attempt + 1) * 1000));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 export const handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
@@ -28,12 +44,12 @@ export const handler = async (event) => {
     }
     messages.push({ role: 'user', content: userMessage });
 
-    const response = await anthropic.messages.create({
+    const response = await withRetry(() => anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1024,
       system: SYSTEM_PROMPT,
       messages,
-    });
+    }));
 
     const text = response.content
       .filter((b) => b.type === 'text')
