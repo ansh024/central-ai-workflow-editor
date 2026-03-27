@@ -36,7 +36,7 @@ function WorkflowNode({ data, selected }) {
           ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-gray-50'
           : ''
       }`}
-      style={{ backgroundColor: '#e5e7eb' }}
+      style={{ backgroundColor: '#d1d5db' }}
     >
       {/* Inner Shell */}
       <div
@@ -48,15 +48,15 @@ function WorkflowNode({ data, selected }) {
       >
         {/* Trigger Tab */}
         {isTrigger && (
-          <div className="absolute -top-6 left-0 flex items-center gap-x-1 rounded-t-[10px] border-gray-200 border-x border-t bg-gray-50 px-[7.5px] py-[3.5px] text-gray-500 text-xs">
-            <div className="w-2 h-2 rounded-full bg-gray-400 animate-pulse" />
+          <div className="absolute -top-6 left-0 flex items-center gap-x-1 rounded-t-[10px] border-gray-300 border-x border-t bg-gray-100 px-[7.5px] py-[3.5px] text-gray-700 text-xs font-medium">
+            <div className="w-2 h-2 rounded-full bg-gray-500 animate-pulse" />
             Trigger
           </div>
         )}
 
         {/* Condition badge */}
         {isCondition && (
-          <div className="absolute right-0 flex items-center gap-x-1 rounded-lg border border-gray-200 bg-gray-50 px-[5px] py-px top-[-30px] text-gray-500 text-xs">
+          <div className="absolute right-0 flex items-center gap-x-1 rounded-lg border border-gray-300 bg-gray-100 px-[5px] py-px top-[-30px] text-gray-700 text-xs font-medium">
             Branches
           </div>
         )}
@@ -75,13 +75,13 @@ function WorkflowNode({ data, selected }) {
           <div className="flex-1 truncate text-gray-900 text-sm font-medium tracking-[-0.3px]">
             {data.label}
           </div>
-          <div className="justify-self-end rounded-lg border border-gray-200 bg-gray-50 px-[6px] py-px text-gray-500 text-xs">
+          <div className="justify-self-end rounded-lg border border-gray-300 bg-gray-100 px-[6px] py-px text-gray-700 text-xs font-medium">
             {data.tag || data.categoryLabel}
           </div>
         </div>
 
         {/* Body */}
-        <div className="mt-2 truncate text-gray-500 text-xs leading-relaxed">
+        <div className="mt-2 truncate text-gray-600 text-xs leading-relaxed">
           {data.description
             ? data.description.length > 80
               ? data.description.slice(0, 80) + '...'
@@ -376,7 +376,7 @@ function FlowCanvasInner({
         maxZoom={2}
         proOptions={{ hideAttribution: true }}
       >
-        <Background color="#e2e8f0" gap={24} size={1} />
+        <Background variant="dots" color="#cbd5e1" gap={24} size={1.5} />
         <Controls
           showInteractive={false}
           className="!bg-white !border !border-gray-200 !rounded-xl !shadow-lg"
