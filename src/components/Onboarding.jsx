@@ -365,6 +365,7 @@ export default function Onboarding({ onBack, onComplete }) {
   const currentStepRef = useRef(currentStep);
   const messagesEndRef = useRef(null);
   const processingRef = useRef(false);
+  const processInputRef = useRef(null); // ref to break circular dep
 
   // Keep refs in sync
   useEffect(() => { stepDataRef.current = stepData; }, [stepData]);
@@ -394,15 +395,17 @@ export default function Onboarding({ onBack, onComplete }) {
     setOrbState('idle');
   }, [audioPlayer]);
 
-  // Auto-arm the mic after Max finishes talking
+  // Auto-arm the mic after Max finishes talking.
+  // Uses processInputRef instead of processInput directly to avoid a
+  // circular useCallback dependency (processInput ↔ autoStartListening).
   const autoStartListening = useCallback(() => {
     if (processingRef.current || voiceInput.isListening || audioPlayer.isPlaying) return;
     setOrbState('listening');
     voiceInput.startListening((finalText) => {
       setOrbState('idle');
-      processInput(finalText);
+      processInputRef.current?.(finalText);
     });
-  }, [voiceInput, audioPlayer, processInput]);
+  }, [voiceInput, audioPlayer]); // ← no processInput dep
 
   // Speak Max's intro for a step (once per step), then auto-arm mic
   const speakStepIntro = useCallback(async (stepId) => {
@@ -479,6 +482,9 @@ export default function Onboarding({ onBack, onComplete }) {
     // Re-arm mic so Max can hear the next response immediately
     autoStartListening();
   }, [addMsg, speak, autoStartListening]);
+
+  // Keep ref in sync so autoStartListening always calls the latest version
+  useEffect(() => { processInputRef.current = processInput; }, [processInput]);
 
   // Voice input handler — guard against clicking while Max is speaking/processing
   const toggleListening = useCallback(() => {
