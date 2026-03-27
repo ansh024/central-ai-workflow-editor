@@ -2,15 +2,15 @@ import Anthropic from '@anthropic-ai/sdk';
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-// Retry up to 3 times on Anthropic 529 overloaded errors
-async function withRetry(fn, maxRetries = 3) {
+// Retry up to 4 times on Anthropic 529 overloaded errors (1s, 2s, 4s backoff)
+async function withRetry(fn, maxRetries = 4) {
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       return await fn();
     } catch (err) {
       const isOverloaded = err.status === 529 || err.error?.type === 'overloaded_error';
       if (isOverloaded && attempt < maxRetries - 1) {
-        await new Promise(r => setTimeout(r, (attempt + 1) * 1000)); // 1s, 2s
+        await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 1000)); // 1s, 2s, 4s
         continue;
       }
       throw err;
@@ -145,9 +145,10 @@ export const handler = async (event) => {
       userMessage += `\n\nCurrent step data: ${JSON.stringify(stepData)}`;
     }
 
+    // Haiku is faster + less overloaded than Sonnet 4 for simple extraction
     const response = await withRetry(() => anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1024,
+      model: 'claude-3-5-haiku-20241022',
+      max_tokens: 512,
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }],
     }));
