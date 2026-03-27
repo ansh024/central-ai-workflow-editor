@@ -5,6 +5,14 @@
 
 [functions]
   node_bundler = "esbuild"
+
+[functions."voice-tts"]
+  timeout = 26
+
+[functions."voice-interpret"]
+  timeout = 26
+
+[functions."voice-onboarding"]
   timeout = 26
 
 # API routes → Netlify Functions
