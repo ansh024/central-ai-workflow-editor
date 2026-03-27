@@ -1,7 +1,25 @@
 [build]
   command = "npm run build"
   publish = "dist"
+  functions = "netlify/functions"
 
+# API routes → Netlify Functions
+[[redirects]]
+  from = "/api/voice/tts"
+  to = "/.netlify/functions/voice-tts"
+  status = 200
+
+[[redirects]]
+  from = "/api/voice/interpret"
+  to = "/.netlify/functions/voice-interpret"
+  status = 200
+
+[[redirects]]
+  from = "/api/voice/onboarding"
+  to = "/.netlify/functions/voice-onboarding"
+  status = 200
+
+# SPA catch-all — must be last
 [[redirects]]
   from = "/*"
   to = "/index.html"
